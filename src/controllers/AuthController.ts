@@ -1,15 +1,19 @@
 import { Request, Response } from "express";
 import Auth from "../models/Auth";
 import {
-  TAuth,
+  IAuth,
   PickLogin,
   PickRegister,
   JwtPayload,
   PickLogout,
+  PickEditProfile,
+  PickGetProfile,
 } from "../types/auth.types";
 import { verifyToken } from "../middleware/auth";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { uploadImages } from "../config/multer";
+import { uploadCloudinary } from "../config/cloudinary";
 
 declare global {
   namespace Express {
@@ -32,7 +36,7 @@ class AuthController {
         return;
       }
 
-      const isAlreadyRegistered: TAuth | null = await Auth.findOne({
+      const isAlreadyRegistered: IAuth | null = await Auth.findOne({
         email: auth.email,
       });
 
@@ -87,7 +91,7 @@ class AuthController {
         return;
       }
 
-      const isAuthExist: TAuth | null = await Auth.findOne({
+      const isAuthExist: IAuth | null = await Auth.findOne({
         email: auth.email,
       });
       if (!isAuthExist) {
@@ -155,13 +159,45 @@ class AuthController {
     }
   };
 
+  public getProfileByUser = [
+    verifyToken,
+    async (req: Request, res: Response): Promise<void> => {
+      try {
+        const { _id }: PickGetProfile = req.user as JwtPayload;
+
+        const auth: IAuth | null = await Auth.findById(_id);
+
+        if (!auth) {
+          res.status(400).json({
+            status: 400,
+            message: "Account not found",
+          });
+          return;
+        }
+
+        res.status(200).json({
+          status: 200,
+          message: "User Profile Found",
+          data: auth,
+        });
+        return;
+      } catch (error) {
+        res.status(500).json({
+          status: 500,
+          message: "Server Internal Error",
+          error: error instanceof Error ? error.message : error,
+        });
+        return;
+      }
+    },
+  ];
   public logout = [
     verifyToken,
     async (req: Request, res: Response): Promise<void> => {
       try {
         const { _id }: PickLogout = req.user as JwtPayload;
 
-        const auth: TAuth | null = await Auth.findById(_id);
+        const auth: IAuth | null = await Auth.findById(_id);
 
         if (!auth) {
           res.status(404).json({
@@ -186,6 +222,67 @@ class AuthController {
           message: "Internal server error",
         });
         return;
+      }
+    },
+  ];
+  public editProfile = [
+    verifyToken,
+    uploadImages,
+    async (req: Request, res: Response): Promise<void> => {
+      try {
+        const auth: PickEditProfile = req.body;
+        const user = (req as any).user;
+
+        if (!user?._id) {
+          res.status(401).json({
+            status: 401,
+            message: "Unauthorized",
+          });
+        }
+
+        const files = req.files as
+          | Record<string, Express.Multer.File[]>
+          | undefined;
+        const foto = files?.fotoProfile?.[0];
+        let fotoUrl: string | undefined;
+
+        if (foto) {
+          const result = await uploadCloudinary(
+            foto.buffer,
+            "fotoProfile",
+            foto.originalname
+          );
+          fotoUrl = result.secure_url;
+        }
+
+        const updateData: Partial<PickEditProfile & { fotoProfile?: string }> =
+          {
+            ...(auth.fullName && { fullName: auth.fullName }),
+            ...(auth.email && { email: auth.email }),
+
+            ...(fotoUrl && { fotoProfile: fotoUrl }),
+          };
+
+        if (Object.keys(updateData).length === 0) {
+          res.status(400).json({
+            status: 400,
+            message: "Nothing to update",
+          });
+        }
+
+        await Auth.findByIdAndUpdate(user._id, { $set: updateData });
+
+        res.status(200).json({
+          status: 200,
+          message: "Profile updated successfully",
+          data: updateData,
+        });
+      } catch (error) {
+        res.status(500).json({
+          status: 500,
+          message: "Server Internal Error",
+          error: error instanceof Error ? error.message : error,
+        });
       }
     },
   ];
