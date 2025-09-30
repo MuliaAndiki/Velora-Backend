@@ -12,6 +12,8 @@ class AuthRouter {
     this.authRouter.post("/", AuthController.register);
     this.authRouter.post("/login", AuthController.login);
     this.authRouter.post("/logout", AuthController.logout);
+    this.authRouter.put("/profile", AuthController.editProfile);
+    this.authRouter.get("/profile", AuthController.getProfileByUser);
   }
 }
 
