@@ -33,41 +33,21 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Transaction = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const Auth = new mongoose_1.Schema({
-    email: {
-        type: String,
-        required: true,
-        unique: true,
-        match: [
-            /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
-            "Please enter a valid email",
-        ],
-    },
-    fullName: {
-        type: String,
+const transactionSchema = new mongoose_1.Schema({
+    amount: { type: Number, required: true },
+    categoryId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "Category",
         required: true,
     },
-    phone: {
-        type: String,
-        required: true,
-        match: [/^[0-9]+$/, "Phone number must contain digits only"],
-    },
-    password: {
-        type: String,
-        required: true,
-        match: [
-            /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/,
-            "Password must be at least 8 characters, include an uppercase letter, a number, and a special character.",
-        ],
-    },
-    token: {
-        type: String,
-        default: null,
-    },
-    photoUrl: {
-        type: String,
-        default: null,
-    },
-}, { timestamps: true });
-exports.default = mongoose_1.default.model("Auth", Auth);
+    description: { type: String, required: true },
+    date: { type: Date, required: true },
+    receiptUrl: { type: String },
+    type: { type: String, enum: ["income", "expense"], required: true },
+    userId: { type: mongoose_1.Schema.Types.ObjectId, ref: "Auth", required: true },
+}, {
+    timestamps: true,
+});
+exports.Transaction = mongoose_1.default.model("Transaction", transactionSchema);
