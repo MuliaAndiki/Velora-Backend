@@ -20,8 +20,8 @@ const Auth = new Schema<partialAuth>(
     },
     phone: {
       type: String,
-      required: true,
       match: [/^[0-9]+$/, "Phone number must contain digits only"],
+      default: null,
     },
     password: {
       type: String,

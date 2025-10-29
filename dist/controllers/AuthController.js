@@ -14,7 +14,7 @@ class AuthController {
         this.register = async (req, res) => {
             try {
                 const auth = req.body;
-                if (!auth.email || !auth.fullName || !auth.phone || !auth.password) {
+                if (!auth.email || !auth.fullName || !auth.password) {
                     res.status(400).json({
                         status: 400,
                         message: "All field is required",
@@ -39,7 +39,6 @@ class AuthController {
                     const newAuth = new Auth_1.default({
                         email: auth.email,
                         fullName: auth.fullName,
-                        phone: auth.phone,
                         password: hash,
                     });
                     await newAuth.save();

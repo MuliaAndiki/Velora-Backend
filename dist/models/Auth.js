@@ -50,8 +50,8 @@ const Auth = new mongoose_1.Schema({
     },
     phone: {
         type: String,
-        required: true,
         match: [/^[0-9]+$/, "Phone number must contain digits only"],
+        default: null,
     },
     password: {
         type: String,

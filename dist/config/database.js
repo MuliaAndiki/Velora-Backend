@@ -12,18 +12,21 @@ const clientOptions = {
         strict: true,
         deprecationErrors: true,
     },
+    // Opsi khusus untuk MongoDB Atlas
     retryWrites: true,
     w: "majority",
-    maxPoolSize: 10,
+    maxPoolSize: 10, // Maintain up to 10 socket connections
     serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
     socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
     bufferCommands: false, // Disable mongoose buffering
 };
 const connectDB = async () => {
     try {
+        // Validasi environment variable
         if (!process.env.MONGO_URI) {
             throw new Error("MONGO_URI environment variable is not defined. Please check your .env file");
         }
+        // Validasi format MongoDB Atlas URI
         if (!process.env.MONGO_URI.includes("mongodb+srv://")) {
             console.warn("⚠️  Warning: URI doesn't appear to be a MongoDB Atlas connection string");
         }
@@ -33,6 +36,7 @@ const connectDB = async () => {
     }
     catch (error) {
         console.error("❌ Failed to connect to MongoDB Atlas:", error);
+        // Specific error handling untuk MongoDB Atlas
         if (error instanceof Error) {
             if (error.message.includes("authentication failed")) {
                 console.error("🔐 Authentication Error: Check your username/password in the connection string");

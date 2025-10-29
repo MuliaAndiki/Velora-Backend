@@ -14,10 +14,7 @@ export interface IAuth extends Document {
 }
 
 export type JwtPayload = Pick<IAuth, "_id" | "email" | "fullName" | "phone">;
-export type PickRegister = Pick<
-  IAuth,
-  "email" | "fullName" | "phone" | "password"
->;
+export type PickRegister = Pick<IAuth, "email" | "fullName" | "password">;
 export type PickLogin = Pick<IAuth, "email" | "password">;
 export type PickLogout = Pick<IAuth, "_id">;
 
