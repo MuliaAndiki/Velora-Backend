@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function connectWithRetry(retries = 5, delay = 3000) {
+export async function connectWithRetry(retries = 10, delay = 3000) {
   for (let i = 0; i < retries; i++) {
     try {
       await prisma.$connect();
