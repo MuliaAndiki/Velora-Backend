@@ -1,24 +1,14 @@
-
-FROM node:18 AS build
+FROM oven/bun:1.1.45 AS build
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install
+COPY package.json ./
+RUN bun install
 
 COPY . .
 
-RUN npm run build
-
-FROM node:18-alpine
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm install --omit=dev
-
-COPY --from=build /app/dist ./dist
+RUN bunx prisma generate
 
 EXPOSE 5000
 
-CMD ["node", "dist/server.js"]
+CMD ["bun", "run", "src/serve.ts"]

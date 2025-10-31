@@ -1,22 +1,21 @@
-import { Document } from "mongoose";
-
-export interface IAuth extends Document {
-  _id: any;
+export interface Auth {
+  id: string;
   email: string;
   fullName: string;
-  phone: string;
   password: string;
-  token: string;
-  photoUrl?: string | null;
+  token?: string;
+  role: string;
   createdAt: Date;
-  updateAt: Date;
-  __v: any;
+  updatedAt: Date;
+  otp?: string;
+  expOtp?: Date;
+  isVerify?: boolean;
 }
 
-export type JwtPayload = Pick<IAuth, "_id" | "email" | "fullName" | "phone">;
-export type PickRegister = Pick<IAuth, "email" | "fullName" | "password">;
-export type PickLogin = Pick<IAuth, "email" | "password">;
-export type PickLogout = Pick<IAuth, "_id">;
-
-export type PickEditProfile = Pick<IAuth, "fullName" | "email" | "phone">;
-export type PickGetProfile = Pick<IAuth, "_id">;
+export type JwtPayload = Pick<Auth, "id" | "email" | "role" | "fullName">;
+export type PickRegister = Pick<
+  Auth,
+  "email" | "fullName" | "password" | "role"
+>;
+export type PickLogin = Pick<Auth, "email" | "password">;
+export type PickLogout = Pick<Auth, "id">;
