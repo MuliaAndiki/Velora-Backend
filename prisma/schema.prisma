@@ -20,6 +20,18 @@ model User {
   otp       String?
   expOtp    DateTime?
   isVerify  Boolean?
+  photoUrl  String?
 
+  categories Category[]
   @@map("User")
 }
+
+model Category{
+  id String @id @default(uuid())
+  name String
+  userID String
+  user User @relation(fields: [userID], references: [id])
+
+  @@map("Category")
+}
+

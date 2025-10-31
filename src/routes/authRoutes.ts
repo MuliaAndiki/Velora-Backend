@@ -23,12 +23,24 @@ class AuthRouter {
     this.authRouter.post("/register", (c: AppContext) =>
       AuthController.register(c)
     );
+    this.authRouter.post("/verify", (e: AppContext) =>
+      AuthController.verifyOtp(e)
+    );
     this.authRouter.post(
       "/logout",
       (c: AppContext) => AuthController.logout(c),
       {
         beforeHandle: [verifyToken().beforeHandle],
       }
+    );
+    this.authRouter.post("/forgot", (c: AppContext) =>
+      AuthController.forgotPassword(c)
+    );
+    this.authRouter.post("/send-otp", (e: AppContext) =>
+      AuthController.sendOtp(e)
+    );
+    this.authRouter.post("/reset-password", (e: AppContext) =>
+      AuthController.resetPassword(e)
     );
   }
 }

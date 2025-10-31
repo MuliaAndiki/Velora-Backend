@@ -4,12 +4,16 @@ import jwt from "jsonwebtoken";
 import {
   PickRegister,
   PickLogin,
-  PickLogout,
   JwtPayload,
+  PickForgotPasswordEmail,
+  PickVerify,
+  PickSendOtp,
+  PickResetPassword,
 } from "@/types/auth.types";
 import prisma from "prisma/client";
 import { AppContext } from "@/contex/app-context";
-import { verifyToken } from "@/middlewares/auth";
+import { generateOtp } from "@/utils/generate-otp";
+import { sendOTPEmail } from "@/utils/mailer";
 
 class AuthController {
   public async register(c: AppContext) {
@@ -29,6 +33,8 @@ class AuthController {
       }
 
       const hashedPassword = await bcryptjs.hash(auth.password, 10);
+      const otp = generateOtp(6);
+      const otpExpiress = new Date(Date.now() + 5 * 60 * 1000);
 
       const newUser = await prisma.user.create({
         data: {
@@ -36,9 +42,13 @@ class AuthController {
           fullName: auth.fullName,
           password: hashedPassword,
           role: auth.role || "user",
+          otp: otp,
+          expOtp: otpExpiress,
+          isVerify: false,
         },
       });
-
+      newUser.expOtp = otpExpiress;
+      await sendOTPEmail(auth.email, otp);
       return c.json?.(
         {
           status: 201,
@@ -53,6 +63,7 @@ class AuthController {
         {
           status: 500,
           message: "Server Interval Error",
+          error: error instanceof Error ? error.message : error,
         },
         500
       );
@@ -123,7 +134,14 @@ class AuthController {
       );
     } catch (error) {
       console.error(error);
-      return c.json?.({ status: 500, message: "Internal server error" }, 500);
+      return c.json?.(
+        {
+          status: 500,
+          message: "Internal server error",
+          error: error instanceof Error ? error.message : error,
+        },
+        500
+      );
     }
   }
 
@@ -157,7 +175,229 @@ class AuthController {
       );
     } catch (error) {
       console.error(error);
-      return c.json?.({ status: 500, message: "Internal server error" }, 500);
+      return c.json?.(
+        {
+          status: 500,
+          message: "Internal server error",
+          error: error instanceof Error ? error.message : error,
+        },
+        500
+      );
+    }
+  }
+  public async forgotPassword(c: AppContext) {
+    try {
+      const auth = c.body as PickForgotPasswordEmail;
+      if (!auth.email) {
+        return c.json?.(
+          {
+            status: 400,
+            message: "Email Required",
+          },
+          400
+        );
+      }
+      const user = await prisma.user.findFirst({
+        where: { email: auth.email },
+      });
+
+      if (!user) {
+        return c.json?.(
+          {
+            status: 404,
+            message: "Email Not Found",
+          },
+          404
+        );
+      }
+
+      return c.json?.({
+        status: 200,
+        data: user,
+        message: "Succes Get Email",
+      });
+    } catch (error) {
+      console.error(error);
+      return c.json?.(
+        {
+          status: 500,
+          message: "Server Internal Error",
+          error: error instanceof Error ? error.message : error,
+        },
+        500
+      );
+    }
+  }
+  public async verifyOtp(c: AppContext) {
+    try {
+      const auth = c.body as PickVerify;
+      if (!auth.email || !auth.otp) {
+        return c.json?.(
+          {
+            status: 400,
+            message: "Email & Otp requaired",
+          },
+          400
+        );
+      }
+      const user = await prisma.user.findFirstOrThrow({
+        where: {
+          email: auth.email,
+          otp: auth.otp,
+        },
+      });
+
+      if (!user) {
+        return c.json?.(
+          {
+            status: 404,
+            message: "Email or Otp Not Found",
+          },
+          404
+        );
+      }
+      const updateUser = await prisma.user.update({
+        where: { id: user.id },
+        data: { isVerify: true, otp: null },
+      });
+
+      return c.json?.({
+        status: 200,
+        message: "Otp isVerify",
+        data: updateUser,
+      });
+    } catch (error) {
+      console.error(error);
+      return c.json?.(
+        {
+          status: 500,
+          message: "Server Internal Error",
+          error: error instanceof Error ? error.message : error,
+        },
+        500
+      );
+    }
+  }
+
+  public async sendOtp(c: AppContext) {
+    try {
+      const auth = c.body as PickSendOtp;
+      if (!auth.email) {
+        return c.json?.(
+          {
+            status: 400,
+            message: "Email is required",
+          },
+          400
+        );
+      }
+      const user = await prisma.user.findFirstOrThrow({
+        where: {
+          email: auth.email,
+        },
+      });
+
+      if (!user) {
+        return c.json?.(
+          {
+            status: 404,
+            message: "Account Not Found",
+          },
+          404
+        );
+      }
+
+      const otp = generateOtp(6);
+      const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
+
+      const newOtp = await prisma.user.update({
+        where: { id: user.id },
+        data: { otp: otp, expOtp: otpExpires },
+      });
+
+      await sendOTPEmail(auth.email, otp);
+
+      return c.json?.(
+        {
+          status: 200,
+          message: "Succes Update Otp",
+          data: newOtp,
+        },
+        200
+      );
+    } catch (error) {
+      console.error(error);
+      return c.json?.(
+        {
+          status: 500,
+          message: "Server Internal Error",
+          error: error instanceof Error ? error.message : error,
+        },
+        500
+      );
+    }
+  }
+  public async resetPassword(c: AppContext) {
+    try {
+      const auth = c.body as PickResetPassword;
+      if (!auth.email || !auth.password) {
+        return c.json?.(
+          {
+            status: 404,
+            message: "Email & NewPassword required ",
+          },
+          404
+        );
+      }
+      const user = await prisma.user.findFirst({
+        where: {
+          email: auth.email,
+        },
+      });
+      if (!user) {
+        return c.json?.(
+          {
+            status: 404,
+            message: "Email Not Found",
+          },
+          404
+        );
+      }
+      if (!user.isVerify) {
+        return c.json?.(
+          {
+            status: 400,
+            message: "accound not verify",
+          },
+          400
+        );
+      }
+
+      const hashedPassword = await bcryptjs.hash(auth.password, 10);
+
+      const newPassword = await prisma.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword },
+      });
+
+      return c.json?.(
+        {
+          status: 200,
+          message: "Succes Reset Password",
+          data: newPassword,
+        },
+        200
+      );
+    } catch (error) {
+      console.error(error);
+      return c.json?.(
+        {
+          status: 500,
+          message: "Server Internal Error",
+          error: error instanceof Error ? error.message : error,
+        },
+        500
+      );
     }
   }
 }

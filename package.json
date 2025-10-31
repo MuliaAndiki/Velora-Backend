@@ -6,25 +6,26 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "prisma:generate": "node node_modules/.bin/prisma generate",
-    "dev": "npm run prisma:generate && bun --watch run src/serve.ts",
+    "prisma:generate": "bun prisma generate",
+    "dev": "bun run prisma:generate && bun --watch run src/serve.ts",
     "start": "bun run src/serve.ts"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.0",
     "@prisma/client": "^6.18.0",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/nodemailer": "^7.0.3",
     "bcryptjs": "^3.0.2",
     "elysia": "^1.2.0",
     "jsonwebtoken": "^9.0.2",
-    "prisma": "^6.18.0"
+    "nodemailer": "^7.0.10",
+    "prisma": "^6.18.0",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@types/bcryptjs": "^3.0.0",
-    "@types/node": "^22.10.5",
-    "@vercel/node": "^3.2.27",
     "bun-types": "^1.2.0",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "@types/bcryptjs": "^3.0.0",
+    "@types/jsonwebtoken": "^9.0.10"
   }
 }
