@@ -240,7 +240,7 @@ class AuthController {
           400
         );
       }
-      const user = await prisma.user.findFirstOrThrow({
+      const user = await prisma.user.findFirst({
         where: {
           email: auth.email,
           otp: auth.otp,
@@ -251,21 +251,25 @@ class AuthController {
         return c.json?.(
           {
             status: 404,
-            message: "Email or Otp Not Found",
+            message: "Email or OTP Not Found / OTP Failed",
           },
           404
         );
       }
+
       const updateUser = await prisma.user.update({
-        where: { id: user.id },
+        where: { id: user!.id },
         data: { isVerify: true, otp: null },
       });
 
-      return c.json?.({
-        status: 200,
-        message: "Otp isVerify",
-        data: updateUser,
-      });
+      return c.json?.(
+        {
+          status: 200,
+          message: "Otp isVerify",
+          data: updateUser,
+        },
+        200
+      );
     } catch (error) {
       console.error(error);
       return c.json?.(
