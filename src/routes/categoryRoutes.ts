@@ -52,6 +52,13 @@ class CategoryRouter {
         beforeHandle: [verifyToken().beforeHandle],
       }
     );
+    this.categoryRouter.put(
+      "/:id",
+      (c: AppContext) => CategoryController.EditCategoryById(c),
+      {
+        beforeHandle: [verifyToken().beforeHandle],
+      }
+    );
   }
 }
 export default new CategoryRouter().categoryRouter;
