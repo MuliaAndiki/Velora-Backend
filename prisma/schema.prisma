@@ -21,6 +21,7 @@ model User {
   isVerify   Boolean?
   photoUrl   String?
   categories Category[]
+  goal       Goal[]
 
   @@map("User")
 }
@@ -34,4 +35,18 @@ model Category {
   user      User     @relation(fields: [userID], references: [id])
 
   @@map("Category")
+}
+
+model Goal {
+  id           String   @id @default(uuid())
+  name         String
+  targetAmount Int
+  savedAmount  Int @default(0)
+  deadline     DateTime
+  UserID       String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [UserID], references: [id])
+
+  @@map("Goal")
 }

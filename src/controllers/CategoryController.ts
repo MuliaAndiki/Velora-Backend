@@ -2,7 +2,6 @@ import { AppContext } from "@/contex/app-context";
 import { JwtPayload } from "@/types/auth.types";
 import { PickCreateCategory, PickGetID } from "@/types/category.types";
 import prisma from "prisma/client";
-import { tr } from "zod/locales";
 
 class CategoryController {
   public async create(c: AppContext) {
@@ -128,6 +127,16 @@ class CategoryController {
           400
         );
       }
+
+      if (cate.id !== jwtUser.id) {
+        return c.json?.(
+          {
+            status: 403,
+            message: "Not Acces Other Category User",
+          },
+          403
+        );
+      }
       const category = await prisma.category.findUnique({
         where: {
           id: cate.id,
@@ -186,6 +195,16 @@ class CategoryController {
             message: "User Not Found",
           },
           404
+        );
+      }
+
+      if (cate.id !== jwtUser.id) {
+        return c.json?.(
+          {
+            status: 403,
+            message: "Not Delete Category Other User",
+          },
+          403
         );
       }
 
