@@ -1,6 +1,6 @@
 import { AppContext } from "@/contex/app-context";
 import { JwtPayload } from "@/types/auth.types";
-import { PickCreateCategory, PickGetCategory } from "@/types/category.types";
+import { PickCreateCategory, PickGetID } from "@/types/category.types";
 import prisma from "prisma/client";
 import { tr } from "zod/locales";
 
@@ -107,7 +107,7 @@ class CategoryController {
   }
   public async getCategoryByID(c: AppContext) {
     try {
-      const cate = c.params as PickGetCategory;
+      const cate = c.params as PickGetID;
       const jwtUser = c.user as JwtPayload;
 
       if (!jwtUser) {
@@ -119,7 +119,7 @@ class CategoryController {
           400
         );
       }
-      if (!cate) {
+      if (!cate.id) {
         return c.json?.(
           {
             status: 400,
@@ -131,6 +131,7 @@ class CategoryController {
       const category = await prisma.category.findUnique({
         where: {
           id: cate.id,
+          userID: jwtUser.id,
         },
         select: {
           id: true,
@@ -167,7 +168,7 @@ class CategoryController {
   }
   public async deleteCategoryByID(c: AppContext) {
     try {
-      const cate = c.params as PickGetCategory;
+      const cate = c.params as PickGetID;
       const jwtUser = c.user as JwtPayload;
       if (!cate.id) {
         return c.json?.(
@@ -191,6 +192,7 @@ class CategoryController {
       const category = await prisma.category.delete({
         where: {
           id: cate.id,
+          userID: jwtUser.id,
         },
       });
       if (!category) {
@@ -254,6 +256,80 @@ class CategoryController {
         message: "Server Internal Error",
         error: error instanceof Error ? error.message : error,
       });
+    }
+  }
+  public async EditCategoryById(c: AppContext) {
+    try {
+      const cate = c.body as PickCreateCategory;
+      const params = c.params as PickGetID;
+      const jwtUser = c.user as JwtPayload;
+
+      if (!params.id) {
+        return c.json?.(
+          {
+            status: 400,
+            message: "Params Is Required",
+          },
+          400
+        );
+      }
+      if (!cate.name) {
+        return c.json?.(
+          {
+            status: 400,
+            message: "Body Is Required",
+          },
+          400
+        );
+      }
+      if (!jwtUser) {
+        return c.json?.(
+          {
+            status: 404,
+            message: "User Not Found",
+          },
+          404
+        );
+      }
+
+      const category = await prisma.category.update({
+        where: {
+          id: params.id,
+          userID: jwtUser.id,
+        },
+        data: {
+          name: cate.name,
+        },
+      });
+
+      if (!category) {
+        return c.json?.(
+          {
+            status: 400,
+            message: "Edit Category Failed",
+          },
+          400
+        );
+      }
+
+      return c.json?.(
+        {
+          status: 200,
+          message: "Succes Update Category",
+          data: category,
+        },
+        200
+      );
+    } catch (error) {
+      console.error(error);
+      return c.json?.(
+        {
+          status: 500,
+          message: "Server Internal Error",
+          error: error instanceof Error ? error.message : error,
+        },
+        500
+      );
     }
   }
 }
