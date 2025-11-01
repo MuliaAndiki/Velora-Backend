@@ -2,6 +2,7 @@ import Elysia from "elysia";
 import cors from "@elysiajs/cors";
 import autnRoutes from "./routes/authRoutes";
 import categoryRoutes from "./routes/categoryRoutes";
+import goalRoutes from "./routes/goalRoutes";
 
 class App {
   public app: Elysia;
@@ -18,6 +19,7 @@ class App {
     this.app.use(cors({ origin: "*" }));
     this.app.use(autnRoutes);
     this.app.use(categoryRoutes);
+    this.app.use(goalRoutes);
   }
 }
 
