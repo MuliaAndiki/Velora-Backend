@@ -13,7 +13,7 @@ export const sendOTPEmail = async (to: string, otp: string) => {
   });
 
   const info = await transporter.sendMail({
-    from: `"Synch Hub" <${env.SMTP_USER}>`,
+    from: `"Velora" <${env.SMTP_USER}>`,
     to,
     subject: "Kode OTP Verifikasi Akun Anda",
     text: `Kode OTP kamu adalah: ${otp}`,
