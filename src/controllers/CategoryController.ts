@@ -128,15 +128,6 @@ class CategoryController {
         );
       }
 
-      if (cate.id !== jwtUser.id) {
-        return c.json?.(
-          {
-            status: 403,
-            message: "Not Acces Other Category User",
-          },
-          403
-        );
-      }
       const category = await prisma.category.findUnique({
         where: {
           id: cate.id,
@@ -195,16 +186,6 @@ class CategoryController {
             message: "User Not Found",
           },
           404
-        );
-      }
-
-      if (cate.id !== jwtUser.id) {
-        return c.json?.(
-          {
-            status: 403,
-            message: "Not Delete Category Other User",
-          },
-          403
         );
       }
 

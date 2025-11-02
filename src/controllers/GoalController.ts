@@ -138,16 +138,6 @@ class GoalController {
         );
       }
 
-      if (go.id !== jwtUser.id) {
-        return c.json?.(
-          {
-            status: 403,
-            message: "Not Acces Other Goal User",
-          },
-          403
-        );
-      }
-
       const goal = await prisma.goal.findMany({
         where: {
           id: go.id,
@@ -251,16 +241,6 @@ class GoalController {
             message: "User Not Found",
           },
           404
-        );
-      }
-
-      if (go.id !== jwtUser.id) {
-        return c.json?.(
-          {
-            status: 403,
-            message: "Not Delete Other Goal User ",
-          },
-          403
         );
       }
 
