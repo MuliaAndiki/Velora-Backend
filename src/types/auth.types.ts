@@ -13,7 +13,10 @@ export interface Auth {
   isVerify?: boolean;
 }
 
-export type JwtPayload = Pick<Auth, "id" | "email" | "role" | "fullName">;
+export type JwtPayload = Pick<
+  Auth,
+  "id" | "email" | "role" | "fullName" | "token"
+>;
 export type PickRegister = Pick<
   Auth,
   "email" | "fullName" | "password" | "role"
