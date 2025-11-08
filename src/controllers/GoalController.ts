@@ -1,6 +1,6 @@
 import { AppContext } from "@/contex/app-context";
 import { JwtPayload } from "@/types/auth.types";
-import { PickCreateGoal, PickGetID } from "@/types/goal.types";
+import { JwtGoal, PickCreateGoal, PickGetID } from "@/types/goal.types";
 import prisma from "prisma/client";
 
 class GoalController {
@@ -138,16 +138,6 @@ class GoalController {
         );
       }
 
-      if (go.id !== jwtUser.id) {
-        return c.json?.(
-          {
-            status: 403,
-            message: "Not Acces Other Goal User",
-          },
-          403
-        );
-      }
-
       const goal = await prisma.goal.findMany({
         where: {
           id: go.id,
@@ -254,16 +244,6 @@ class GoalController {
         );
       }
 
-      if (go.id !== jwtUser.id) {
-        return c.json?.(
-          {
-            status: 403,
-            message: "Not Delete Other Goal User ",
-          },
-          403
-        );
-      }
-
       const goal = await prisma.goal.delete({
         where: {
           id: go.id,
@@ -352,6 +332,69 @@ class GoalController {
         },
         200
       );
+    } catch (error) {
+      console.error(error);
+      return c.json?.(
+        {
+          status: 500,
+          message: "Server Internal Error",
+          error: error instanceof Error ? error.message : error,
+        },
+        500
+      );
+    }
+  }
+  // Fix Ctl
+  public async Progress(c: AppContext) {
+    try {
+      const jwtUser = c.user as JwtPayload;
+      const go = c.params as PickGetID;
+      if (!jwtUser) {
+        return c.json?.(
+          {
+            status: 404,
+            message: "User Not Found",
+          },
+          404
+        );
+      }
+      if (!go) {
+        return c.json?.(
+          {
+            status: 404,
+            message: "ID Goal Not Found",
+          },
+          404
+        );
+      }
+
+      const goal = await prisma.goal.findMany({
+        where: {
+          UserID: jwtUser.id,
+          id: go.id,
+        },
+      });
+      const result = goal.map((goal) => {
+        const percent = Math.min(
+          100,
+          Math.round((goal.savedAmount / goal.targetAmount) * 100)
+        );
+
+        return {
+          id: goal.id,
+          name: goal.name,
+          deadline: goal.deadline,
+          savedAmount: goal.savedAmount,
+          targetAmount: goal.targetAmount,
+          percent,
+        } as JwtGoal & { percent: number };
+      });
+
+      return c.json?.({
+        status: 200,
+        message: "Progres Goal Can Get",
+        data: result,
+      });
     } catch (error) {
       console.error(error);
       return c.json?.(

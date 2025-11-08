@@ -116,6 +116,7 @@ class AuthController {
         email: user.email,
         fullName: user.fullName,
         role: user.role,
+        token: user.token!,
       };
       if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET not set");
 
@@ -210,10 +211,23 @@ class AuthController {
           404
         );
       }
+      const otp = generateOtp(6);
+      const otpExpiress = new Date(Date.now() + 5 * 60 * 1000);
+      await sendOTPEmail(auth.email, otp);
+
+      const newOtp = await prisma.user.update({
+        where: {
+          email: auth.email,
+        },
+        data: {
+          otp: otp,
+          expOtp: otpExpiress,
+        },
+      });
 
       return c.json?.({
         status: 200,
-        data: user,
+        data: newOtp,
         message: "Succes Get Email",
       });
     } catch (error) {

@@ -49,6 +49,13 @@ class GoalRouter {
     this.goalRouter.put("/:id", (c: AppContext) => GoalController.EditGoal(c), {
       beforeHandle: [verifyToken().beforeHandle],
     });
+    this.goalRouter.get(
+      "/progres/:id",
+      (c: AppContext) => GoalController.Progress(c),
+      {
+        beforeHandle: [verifyToken().beforeHandle],
+      }
+    );
   }
 }
 
