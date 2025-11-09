@@ -1,51 +1,65 @@
 import { AppContext } from "@/contex/app-context";
 import { JwtPayload } from "@/types/auth.types";
 import { PickCreateCategory, PickGetID } from "@/types/category.types";
+import { uploadCloudinary } from "@/utils/clodinary";
 import prisma from "prisma/client";
 
 class CategoryController {
   public async create(c: AppContext) {
     try {
-      const cate = c.body as PickCreateCategory;
+      const cate = c.body as PickCreateCategory & { cate_avaUrl?: string };
       const jwtUser = c.user as JwtPayload;
 
       if (!cate.name) {
         return c.json?.(
-          {
-            status: 400,
-            message: "Name for category is required",
-          },
+          { status: 400, message: "Name for category is required" },
           400
         );
       }
 
-      const user = await prisma.user.findUnique({
-        where: { id: jwtUser.id },
-      });
-
+      const user = await prisma.user.findUnique({ where: { id: jwtUser.id } });
       if (!user) {
-        return c.json?.(
-          {
-            status: 404,
-            message: "User not found",
-          },
-          404
+        return c.json?.({ status: 404, message: "User not found" }, 404);
+      }
+
+      let documentUrl: { cate_avaUrl: string } = { cate_avaUrl: "" };
+
+      if (c.files?.cate_avaUrl?.[0]) {
+        const file = c.files.cate_avaUrl[0];
+        const buffer = file.buffer;
+
+        const result = await uploadCloudinary(
+          buffer,
+          "cate_avaUrl",
+          file.originalname
         );
+        documentUrl.cate_avaUrl = result.secure_url;
+      } else if (
+        cate.cate_avaUrl &&
+        typeof cate.cate_avaUrl === "string" &&
+        cate.cate_avaUrl.startsWith("data:image")
+      ) {
+        const base64 = cate.cate_avaUrl;
+        const buffer = Buffer.from(base64.split(",")[1], "base64");
+
+        const result = await uploadCloudinary(
+          buffer,
+          "cate_avaUrl",
+          "image.png"
+        );
+        documentUrl.cate_avaUrl = result.secure_url;
       }
 
       const category = await prisma.category.create({
         data: {
           name: cate.name,
+          avaUrl: documentUrl.cate_avaUrl,
           user: { connect: { id: user.id } },
         },
       });
 
       return c.json?.(
-        {
-          status: 201,
-          message: "Success create category",
-          data: category,
-        },
+        { status: 201, message: "Success create category", data: category },
         201
       );
     } catch (error) {
@@ -75,21 +89,13 @@ class CategoryController {
       }
       const category = await prisma.category.findMany({
         where: { userID: user.id },
-        select: {
-          id: true,
-          name: true,
-        },
       });
-      const data = {
-        items: category.map((cat) => cat),
-        userID: user.id,
-      };
 
       return c.json?.(
         {
           status: 200,
           message: "Category Success Get",
-          data: data,
+          data: category,
         },
         200
       );

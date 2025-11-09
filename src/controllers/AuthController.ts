@@ -418,6 +418,42 @@ class AuthController {
       );
     }
   }
+  public async getProfile(c: AppContext) {
+    try {
+      const user = c.user as JwtPayload;
+
+      if (!user) {
+        return c.json?.(
+          {
+            status: 404,
+            message: "user not found",
+          },
+          404
+        );
+      }
+      const auth = await prisma.user.findFirst({
+        where: {
+          id: user.id,
+        },
+      });
+
+      return c.json?.({
+        status: 200,
+        message: "succes get user",
+        data: auth,
+      });
+    } catch (error) {
+      console.error(error);
+      return c.json?.(
+        {
+          status: 500,
+          message: "Server Internal Error",
+          error: error instanceof Error ? error.message : error,
+        },
+        500
+      );
+    }
+  }
 }
 
 export default new AuthController();
