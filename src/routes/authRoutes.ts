@@ -36,12 +36,15 @@ class AuthRouter {
     this.authRouter.post("/forgot", (c: AppContext) =>
       AuthController.forgotPassword(c)
     );
-    this.authRouter.post("/send-otp", (e: AppContext) =>
-      AuthController.sendOtp(e)
+    this.authRouter.post("/send-otp", (c: AppContext) =>
+      AuthController.sendOtp(c)
     );
-    this.authRouter.post("/reset-password", (e: AppContext) =>
-      AuthController.resetPassword(e)
+    this.authRouter.post("/reset-password", (c: AppContext) =>
+      AuthController.resetPassword(c)
     );
+    this.authRouter.get("/", (c: AppContext) => AuthController.getProfile(c), {
+      beforeHandle: [verifyToken().beforeHandle],
+    });
   }
 }
 

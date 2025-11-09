@@ -1,6 +1,7 @@
 import { AppContext } from "@/contex/app-context";
 import CategoryController from "@/controllers/CategoryController";
 import { verifyToken } from "@/middlewares/auth";
+import { formDataMiddleware } from "@/middlewares/form.data";
 import Elysia from "elysia";
 
 class CategoryRouter {
@@ -24,7 +25,13 @@ class CategoryRouter {
     this.categoryRouter.post(
       "/",
       (c: AppContext) => CategoryController.create(c),
-      { beforeHandle: [verifyToken().beforeHandle] }
+      {
+        parse: "none",
+        beforeHandle: [
+          verifyToken().beforeHandle,
+          formDataMiddleware().beforeHandle,
+        ],
+      }
     );
     this.categoryRouter.get(
       "/",
