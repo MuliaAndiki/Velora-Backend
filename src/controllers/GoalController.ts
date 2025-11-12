@@ -1,7 +1,13 @@
 import { AppContext } from "@/contex/app-context";
 import { JwtPayload } from "@/types/auth.types";
-import { JwtGoal, PickCreateGoal, PickGetID } from "@/types/goal.types";
+import {
+  JwtGoal,
+  PickCreateGoal,
+  PickGetID,
+  PickInsertGoal,
+} from "@/types/goal.types";
 import prisma from "prisma/client";
+import { json } from "zod";
 
 class GoalController {
   public async createGoal(c: AppContext) {
@@ -97,10 +103,27 @@ class GoalController {
           400
         );
       }
+
+      const result = goal.map((goal) => {
+        const percent = Math.min(
+          100,
+          Math.round((goal.savedAmount / goal.targetAmount) * 100)
+        );
+
+        return {
+          id: goal.id,
+          name: goal.name,
+          deadline: goal.deadline,
+          savedAmount: goal.savedAmount,
+          targetAmount: goal.targetAmount,
+          percent,
+        } as JwtGoal & { percent: number };
+      });
+
       return c.json?.({
         status: 200,
         message: "Succesfuly Get Goall",
-        data: goal,
+        data: result,
       });
     } catch (error) {
       console.error(error);
@@ -115,63 +138,6 @@ class GoalController {
     }
   }
 
-  public async getGoalByID(c: AppContext) {
-    try {
-      const go = c.params as PickGetID;
-      const jwtUser = c.user as JwtPayload;
-      if (!go.id) {
-        return c.json?.(
-          {
-            status: 400,
-            message: "Params Is Required",
-          },
-          400
-        );
-      }
-      if (!jwtUser) {
-        return c.json?.(
-          {
-            status: 400,
-            message: "User Not Found",
-          },
-          400
-        );
-      }
-
-      const goal = await prisma.goal.findMany({
-        where: {
-          id: go.id,
-          UserID: jwtUser.id,
-        },
-      });
-
-      if (!goal) {
-        return c.json?.(
-          {
-            status: 400,
-            message: "Failed Get Goal",
-          },
-          400
-        );
-      }
-
-      return c.json?.(
-        {
-          status: 200,
-          message: "Succes Get Data Goal",
-          data: goal,
-        },
-        200
-      );
-    } catch (error) {
-      console.error(error);
-      return c.json?.({
-        status: 500,
-        message: "Server Internal Error",
-        error: error instanceof Error ? error.message : error,
-      });
-    }
-  }
   public async deleteGoalAll(c: AppContext) {
     try {
       const jwtUser = c.user as JwtPayload;
@@ -344,8 +310,8 @@ class GoalController {
       );
     }
   }
-  // Fix Ctl
-  public async Progress(c: AppContext) {
+
+  public async getGoalByID(c: AppContext) {
     try {
       const jwtUser = c.user as JwtPayload;
       const go = c.params as PickGetID;
@@ -405,6 +371,105 @@ class GoalController {
         },
         500
       );
+    }
+  }
+
+  public async getGoalProgresAll(c: AppContext) {
+    try {
+      const jwtUser = c.user as JwtPayload;
+      if (!jwtUser) {
+        return c.json?.(
+          {
+            status: 404,
+            message: "user not found",
+          },
+          404
+        );
+      }
+
+      const goal = await prisma.goal.findMany({
+        where: {
+          UserID: jwtUser.id,
+        },
+      });
+
+      if (goal.length === 0) {
+        return c.json?.(
+          {
+            status: 200,
+            message: "no goals found",
+            data: {
+              targetAmount: 0,
+              saveAmount: 0,
+              percent: 0,
+            },
+          },
+          200
+        );
+      }
+
+      const targetAmount = goal.reduce((acc, g) => acc + g.targetAmount, 0);
+      const saveAmount = goal.reduce((acc, g) => acc + g.savedAmount, 0);
+      const percent =
+        targetAmount > 0
+          ? Math.min(100, Math.round((saveAmount / targetAmount) * 100))
+          : 0;
+      return c.json?.(
+        {
+          status: 200,
+          message: "progress bar all",
+          data: {
+            targetAmount,
+            saveAmount,
+            percent,
+          },
+        },
+        200
+      );
+    } catch (error) {
+      console.error(error);
+      return c.json?.({
+        status: 500,
+        message: "Server Internal Error",
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  }
+
+  // not fix
+  public async insertGoal(c: AppContext) {
+    try {
+      const jwtUser = c.user as JwtPayload;
+      const go = c.body as PickInsertGoal;
+
+      if (!jwtUser) {
+        return c.json?.(
+          {
+            status: 404,
+            message: "user not found",
+          },
+          404
+        );
+      }
+
+      if (!go.savedAmount) {
+        return c.json?.(
+          {
+            status: 400,
+            message: "body is req",
+          },
+          400
+        );
+      }
+
+      // more logic
+    } catch (error) {
+      console.error(error);
+      return c.json?.({
+        status: 500,
+        message: "Server Internal Error",
+        error: error instanceof Error ? error.message : error,
+      });
     }
   }
 }

@@ -18,3 +18,5 @@ export type PickCreateGoal = Pick<
   "name" | "deadline" | "savedAmount" | "targetAmount"
 >;
 export type PickGetID = Pick<Goal, "id">;
+
+export type PickInsertGoal = Pick<Goal, "savedAmount">;

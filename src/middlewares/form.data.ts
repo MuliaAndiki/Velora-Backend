@@ -49,12 +49,9 @@ export const formDataMiddleware = () => ({
         (c as any).body = body;
         c.files = files;
 
-        console.log("✅ FormData - Body fields:", Object.keys(body));
-        console.log("✅ FormData - Files:", Object.keys(files));
         return;
       }
 
-      console.log("ℹ️ Unknown content-type, setting empty body");
       (c as any).body = {};
       c.files = {};
     } catch (error) {

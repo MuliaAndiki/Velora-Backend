@@ -50,8 +50,8 @@ class GoalRouter {
       beforeHandle: [verifyToken().beforeHandle],
     });
     this.goalRouter.get(
-      "/progres/:id",
-      (c: AppContext) => GoalController.Progress(c),
+      "/progres",
+      (c: AppContext) => GoalController.getGoalProgresAll(c),
       {
         beforeHandle: [verifyToken().beforeHandle],
       }
