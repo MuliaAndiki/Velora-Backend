@@ -9,32 +9,34 @@ datasource db {
 }
 
 model User {
-  id         String     @id @default(uuid())
-  email      String     @unique
-  fullName   String
-  password   String
-  token      String?
-  role       String
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  otp        String?
-  expOtp     DateTime?
-  isVerify   Boolean?
-  photoUrl   String?
-  categories Category[]
-  goal       Goal[]
+  id          String        @id @default(uuid())
+  email       String        @unique
+  fullName    String
+  password    String
+  token       String?
+  role        String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  otp         String?
+  expOtp      DateTime?
+  isVerify    Boolean?
+  photoUrl    String?
+  categories  Category[]
+  goal        Goal[]
+  transaction Transaction[]
 
   @@map("User")
 }
 
 model Category {
-  id        String   @id @default(uuid())
-  name      String
-  userID    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  avaUrl    String
-  user      User     @relation(fields: [userID], references: [id], onDelete: Cascade)
+  id          String        @id @default(uuid())
+  name        String
+  userID      String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  avaUrl      String
+  user        User          @relation(fields: [userID], references: [id], onDelete: Cascade)
+  transaction Transaction[]
 
   @@map("Category")
 }
@@ -44,11 +46,30 @@ model Goal {
   name         String
   targetAmount Int
   savedAmount  Int
-  deadline     DateTime
   UserID       String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  endAt        DateTime
+  startAt      DateTime
   user         User     @relation(fields: [UserID], references: [id], onDelete: Cascade)
 
   @@map("Goal")
+}
+
+model Transaction {
+  id          String          @id @default(uuid())
+  amount      Int
+  description String
+  date        DateTime
+  receiptUrl  String
+  type        TransactionType
+  categoryID  String
+  userID      String
+  category    Category        @relation(fields: [categoryID], references: [id], onDelete: Cascade)
+  user        User            @relation(fields: [userID], references: [id], onDelete: Cascade)
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
 }

@@ -7,14 +7,13 @@ import {
   PickInsertGoal,
 } from "@/types/goal.types";
 import prisma from "prisma/client";
-import { json } from "zod";
 
 class GoalController {
   public async createGoal(c: AppContext) {
     try {
       const go = c.body as PickCreateGoal;
       const jwtUser = c.user as JwtPayload;
-      if (!go.name || !go.deadline || !go.savedAmount || !go.targetAmount) {
+      if (!go.name || !go.endAt || !go.savedAmount || !go.targetAmount) {
         return c.json?.(
           {
             status: 404,
@@ -34,10 +33,34 @@ class GoalController {
         );
       }
 
+      const endAt = new Date(go.endAt);
+      const startAt = new Date(go.startAt);
+      const now = new Date();
+
+      if (startAt < now) {
+        return c.json?.(
+          {
+            status: 400,
+            message: "date start not valid",
+          },
+          400
+        );
+      }
+      if (endAt <= startAt) {
+        return c.json?.(
+          {
+            status: 400,
+            message: "date end not valid",
+          },
+          400
+        );
+      }
+
       const goal = await prisma.goal.create({
         data: {
           name: go.name,
-          deadline: new Date(go.deadline),
+          endAt: endAt,
+          startAt: startAt,
           savedAmount: go.savedAmount,
           targetAmount: go.targetAmount,
           UserID: jwtUser.id,
@@ -113,7 +136,8 @@ class GoalController {
         return {
           id: goal.id,
           name: goal.name,
-          deadline: goal.deadline,
+          endAt: goal.endAt,
+          startAt: goal.startAt,
           savedAmount: goal.savedAmount,
           targetAmount: goal.targetAmount,
           percent,
@@ -276,7 +300,6 @@ class GoalController {
           name: go.name,
           savedAmount: go.savedAmount,
           targetAmount: go.targetAmount,
-          deadline: go.deadline,
         },
       });
 
@@ -349,7 +372,7 @@ class GoalController {
         return {
           id: goal.id,
           name: goal.name,
-          deadline: goal.deadline,
+          endAt: goal.endAt,
           savedAmount: goal.savedAmount,
           targetAmount: goal.targetAmount,
           percent,
