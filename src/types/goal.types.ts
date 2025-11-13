@@ -1,8 +1,11 @@
+import { GoalType } from "@/partial";
+
 export interface Goal {
   id: string;
   name: string;
   targetAmount: number;
   savedAmount: number;
+  status: GoalType;
   startAt: Date;
   endAt: Date;
   UserID: string;
@@ -16,7 +19,7 @@ export type JwtGoal = Pick<
 
 export type PickCreateGoal = Pick<
   Goal,
-  "name" | "endAt" | "savedAmount" | "targetAmount" | "startAt"
+  "name" | "endAt" | "savedAmount" | "targetAmount" | "startAt" | "status"
 >;
 export type PickGetID = Pick<Goal, "id">;
 

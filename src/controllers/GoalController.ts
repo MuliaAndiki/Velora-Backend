@@ -64,6 +64,7 @@ class GoalController {
           savedAmount: go.savedAmount,
           targetAmount: go.targetAmount,
           UserID: jwtUser.id,
+          status: "INPROGRESS",
         },
       });
 
@@ -138,6 +139,7 @@ class GoalController {
           name: goal.name,
           endAt: goal.endAt,
           startAt: goal.startAt,
+          status: goal.status,
           savedAmount: goal.savedAmount,
           targetAmount: goal.targetAmount,
           percent,
@@ -375,6 +377,8 @@ class GoalController {
           endAt: goal.endAt,
           savedAmount: goal.savedAmount,
           targetAmount: goal.targetAmount,
+          startAt: goal.startAt,
+          status: goal.status,
           percent,
         } as JwtGoal & { percent: number };
       });
