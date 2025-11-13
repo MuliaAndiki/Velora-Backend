@@ -7,7 +7,7 @@ class AuthRouter {
   public authRouter;
 
   constructor() {
-    this.authRouter = new Elysia({ prefix: "/api/auth" }).derive(() => ({
+    this.authRouter = new Elysia({ prefix: "/auth" }).derive(() => ({
       json(data: any, status = 200) {
         return new Response(JSON.stringify(data), {
           status,

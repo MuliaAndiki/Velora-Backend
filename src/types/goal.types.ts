@@ -3,19 +3,20 @@ export interface Goal {
   name: string;
   targetAmount: number;
   savedAmount: number;
-  deadline: Date;
+  startAt: Date;
+  endAt: Date;
   UserID: string;
   createdAt: Date;
   updatedAt: Date;
 }
 export type JwtGoal = Pick<
   Goal,
-  "id" | "name" | "deadline" | "savedAmount" | "targetAmount"
+  "id" | "name" | "endAt" | "savedAmount" | "targetAmount" | "startAt"
 >;
 
 export type PickCreateGoal = Pick<
   Goal,
-  "name" | "deadline" | "savedAmount" | "targetAmount"
+  "name" | "endAt" | "savedAmount" | "targetAmount" | "startAt"
 >;
 export type PickGetID = Pick<Goal, "id">;
 

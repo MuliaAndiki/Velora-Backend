@@ -8,16 +8,14 @@ class CategoryRouter {
   public categoryRouter;
 
   constructor() {
-    this.categoryRouter = new Elysia({ prefix: "/api/category" }).derive(
-      () => ({
-        json(data: any, status = 200) {
-          return new Response(JSON.stringify(data), {
-            status,
-            headers: { "Content-Type": "application/json" },
-          });
-        },
-      })
-    );
+    this.categoryRouter = new Elysia({ prefix: "/category" }).derive(() => ({
+      json(data: any, status = 200) {
+        return new Response(JSON.stringify(data), {
+          status,
+          headers: { "Content-Type": "application/json" },
+        });
+      },
+    }));
     this.routes();
   }
 

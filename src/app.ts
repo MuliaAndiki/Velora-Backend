@@ -3,6 +3,7 @@ import cors from "@elysiajs/cors";
 import autnRoutes from "./routes/authRoutes";
 import categoryRoutes from "./routes/categoryRoutes";
 import goalRoutes from "./routes/goalRoutes";
+import transactionRoutes from "./routes/transactionRoutes";
 
 class App {
   public app: Elysia;
@@ -17,9 +18,13 @@ class App {
   }
   private middlewares() {
     this.app.use(cors({ origin: "*" }));
-    this.app.use(autnRoutes);
-    this.app.use(categoryRoutes);
-    this.app.use(goalRoutes);
+    this.app.group("/api", (api) =>
+      api
+        .use(autnRoutes)
+        .use(categoryRoutes)
+        .use(goalRoutes)
+        .use(transactionRoutes)
+    );
   }
 }
 

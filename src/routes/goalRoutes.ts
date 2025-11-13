@@ -7,7 +7,7 @@ class GoalRouter {
   public goalRouter;
 
   constructor() {
-    this.goalRouter = new Elysia({ prefix: "/api/goals" }).derive(() => ({
+    this.goalRouter = new Elysia({ prefix: "/goals" }).derive(() => ({
       json(data: any, status = 200) {
         return new Response(JSON.stringify(data), {
           status,
