@@ -64,6 +64,7 @@ class GoalController {
           savedAmount: go.savedAmount,
           targetAmount: go.targetAmount,
           UserID: jwtUser.id,
+          status: "INPROGRESS",
         },
       });
 
@@ -138,6 +139,7 @@ class GoalController {
           name: goal.name,
           endAt: goal.endAt,
           startAt: goal.startAt,
+          status: goal.status,
           savedAmount: goal.savedAmount,
           targetAmount: goal.targetAmount,
           percent,
@@ -357,27 +359,38 @@ class GoalController {
         );
       }
 
-      const goal = await prisma.goal.findMany({
+      const goal = await prisma.goal.findFirst({
         where: {
           UserID: jwtUser.id,
           id: go.id,
         },
       });
-      const result = goal.map((goal) => {
-        const percent = Math.min(
-          100,
-          Math.round((goal.savedAmount / goal.targetAmount) * 100)
-        );
 
-        return {
-          id: goal.id,
-          name: goal.name,
-          endAt: goal.endAt,
-          savedAmount: goal.savedAmount,
-          targetAmount: goal.targetAmount,
-          percent,
-        } as JwtGoal & { percent: number };
-      });
+      if (!goal) {
+        return c.json?.(
+          {
+            status: 404,
+            message: "Goal Not Found",
+          },
+          404
+        );
+      }
+
+      const percent = Math.min(
+        100,
+        Math.round((goal.savedAmount / goal.targetAmount) * 100)
+      );
+
+      const result = {
+        id: goal.id,
+        name: goal.name,
+        endAt: goal.endAt,
+        savedAmount: goal.savedAmount,
+        targetAmount: goal.targetAmount,
+        startAt: goal.startAt,
+        status: goal.status,
+        percent,
+      };
 
       return c.json?.({
         status: 200,

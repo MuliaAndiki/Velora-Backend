@@ -2,6 +2,7 @@ import Elysia from "elysia";
 import AuthController from "@/controllers/AuthController";
 import { AppContext } from "@/contex/app-context";
 import { verifyToken } from "@/middlewares/auth";
+import { formDataMiddleware } from "@/middlewares/form.data";
 
 class AuthRouter {
   public authRouter;
@@ -44,6 +45,13 @@ class AuthRouter {
     );
     this.authRouter.get("/", (c: AppContext) => AuthController.getProfile(c), {
       beforeHandle: [verifyToken().beforeHandle],
+    });
+    this.authRouter.put("/", (c: AppContext) => AuthController.editProfile(c), {
+      parse: "none",
+      beforeHandle: [
+        verifyToken().beforeHandle,
+        formDataMiddleware().beforeHandle,
+      ],
     });
   }
 }

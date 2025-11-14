@@ -9,11 +9,14 @@ import {
   PickVerify,
   PickSendOtp,
   PickResetPassword,
+  PickID,
+  PickUpdateProfile,
 } from "@/types/auth.types";
 import prisma from "prisma/client";
 import { AppContext } from "@/contex/app-context";
 import { generateOtp } from "@/utils/generate-otp";
 import { sendOTPEmail } from "@/utils/mailer";
+import { uploadCloudinary } from "@/utils/clodinary";
 
 class AuthController {
   public async register(c: AppContext) {
@@ -452,6 +455,65 @@ class AuthController {
         },
         500
       );
+    }
+  }
+  public async editProfile(c: AppContext) {
+    try {
+      const user = c.body as PickUpdateProfile;
+      const jwtUser = c.user as JwtPayload;
+      if (!jwtUser) {
+        return c.json?.(
+          {
+            status: 404,
+            message: "user not found",
+          },
+          404
+        );
+      }
+      let documentUrl: { photoUrl: string } = { photoUrl: "" };
+      if (c.files?.photoUrl?.[0]) {
+        const file = c.files.photoUrl[0];
+        const buffer = file.buffer;
+
+        const result = await uploadCloudinary(
+          buffer,
+          "photoUrl",
+          file.originalname
+        );
+        documentUrl.photoUrl = result.secure_url;
+      } else if (
+        user.photoUrl &&
+        typeof user.photoUrl === "string" &&
+        user.photoUrl.startsWith("data:image")
+      ) {
+        const base64 = user.photoUrl;
+        const buffer = Buffer.from(base64.split(",")[1], "base64");
+
+        const result = await uploadCloudinary(buffer, "photoUrl", "image.png");
+        documentUrl.photoUrl = result.secure_url;
+      }
+      const Auth = await prisma.user.update({
+        where: {
+          id: jwtUser.id,
+        },
+        data: {
+          fullName: user.fullName,
+          email: user.email,
+          photoUrl: documentUrl.photoUrl,
+        },
+      });
+      return c.json?.({
+        status: 201,
+        message: "succes update profile",
+        data: Auth,
+      });
+    } catch (error) {
+      console.error(error);
+      return c.json?.({
+        status: 500,
+        message: "Server Internal Error",
+        error: error instanceof Error ? error.message : error,
+      });
     }
   }
 }

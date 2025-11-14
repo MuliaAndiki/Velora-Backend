@@ -26,6 +26,41 @@ class TransactionRoutes {
         beforeHandle: [verifyToken().beforeHandle],
       }
     );
+    this.transactionRouter.get(
+      "/",
+      (c: AppContext) => TransactionController.getByUser(c),
+      {
+        beforeHandle: [verifyToken().beforeHandle],
+      }
+    );
+    this.transactionRouter.get(
+      "/:id",
+      (c: AppContext) => TransactionController.getByID(c),
+      {
+        beforeHandle: [verifyToken().beforeHandle],
+      }
+    );
+    this.transactionRouter.delete(
+      "/",
+      (c: AppContext) => TransactionController.deleteAll(c),
+      {
+        beforeHandle: [verifyToken().beforeHandle],
+      }
+    );
+    this.transactionRouter.delete(
+      "/:id",
+      (c: AppContext) => TransactionController.deleteById(c),
+      {
+        beforeHandle: [verifyToken().beforeHandle],
+      }
+    );
+    this.transactionRouter.put(
+      "/:id",
+      (c: AppContext) => TransactionController.update(c),
+      {
+        beforeHandle: [verifyToken().beforeHandle],
+      }
+    );
   }
 }
 
