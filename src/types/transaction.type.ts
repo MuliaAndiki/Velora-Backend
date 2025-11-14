@@ -17,3 +17,4 @@ export type PickCreateTransaction = Pick<
 >;
 
 export type PickIdCategory = Pick<Transaction, "categoryID">;
+export type PickID = Pick<Transaction, "id">;

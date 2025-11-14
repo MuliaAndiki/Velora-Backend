@@ -488,6 +488,7 @@ class AuthController {
       ) {
         const base64 = user.photoUrl;
         const buffer = Buffer.from(base64.split(",")[1], "base64");
+
         const result = await uploadCloudinary(buffer, "photoUrl", "image.png");
         documentUrl.photoUrl = result.secure_url;
       }
