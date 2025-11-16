@@ -46,12 +46,12 @@ model Goal {
   name         String
   targetAmount Int
   savedAmount  Int
-  status GoalType @default(INPROGRESS)
   UserID       String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   endAt        DateTime
   startAt      DateTime
+  status       GoalType @default(INPROGRESS)
   user         User     @relation(fields: [UserID], references: [id], onDelete: Cascade)
 
   @@map("Goal")
@@ -61,11 +61,12 @@ model Transaction {
   id          String          @id @default(uuid())
   amount      Int
   description String
-  date        DateTime
   receiptUrl  String
   type        TransactionType
   categoryID  String
   userID      String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @default(now())
   category    Category        @relation(fields: [categoryID], references: [id], onDelete: Cascade)
   user        User            @relation(fields: [userID], references: [id], onDelete: Cascade)
 }

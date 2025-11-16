@@ -63,11 +63,9 @@ class TransactionController {
         );
       }
 
-      const date = new Date();
       const transaction = await prisma.transaction.create({
         data: {
           amount: trans.amount,
-          date: date,
           description: trans.description,
           receiptUrl: trans.receiptUrl,
           type: "INCOME",
@@ -112,6 +110,9 @@ class TransactionController {
       const transaction = await prisma.transaction.findMany({
         where: {
           userID: jwtUser.id,
+        },
+        include: {
+          category: {},
         },
       });
 
