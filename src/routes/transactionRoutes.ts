@@ -26,6 +26,13 @@ class TransactionRoutes {
         beforeHandle: [verifyToken().beforeHandle],
       }
     );
+    this.transactionRouter.post(
+      "/",
+      (c: AppContext) => TransactionController.create(c),
+      {
+        beforeHandle: [verifyToken().beforeHandle],
+      }
+    );
     this.transactionRouter.get(
       "/",
       (c: AppContext) => TransactionController.getByUser(c),

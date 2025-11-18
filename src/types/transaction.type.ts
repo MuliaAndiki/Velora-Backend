@@ -1,4 +1,4 @@
-import { TransactionType } from "@/partial";
+import { TransactionType } from "@prisma/client";
 
 export interface Transaction {
   id: string;
