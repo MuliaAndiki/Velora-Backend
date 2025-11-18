@@ -1,4 +1,5 @@
 import { AppContext } from "@/contex/app-context";
+import { TransactionType } from "@prisma/client";
 import { JwtPayload } from "@/types/auth.types";
 import {
   PickCreateTransaction,
@@ -14,53 +15,47 @@ class TransactionController {
       const trans = c.body as PickCreateTransaction;
       const cate = c.params as PickIdCategory;
 
-      if (!cate.categoryID) {
-        return c.json?.(
-          {
-            status: 404,
-            message: "params is required",
-          },
-          404
-        );
-      }
       if (!jwtUser) {
-        return c.json?.(
-          {
-            status: 404,
-            message: "user not found",
-          },
-          404
-        );
+        return c.json?.({ status: 404, message: "user not found" }, 404);
       }
+
       if (
         !trans.amount ||
         !trans.description ||
         !trans.receiptUrl ||
         !trans.type
       ) {
-        return c.json?.(
-          {
-            status: 400,
-            message: "body is required",
-          },
-          400
-        );
+        return c.json?.({ status: 400, message: "body is required" }, 400);
       }
 
-      const categoryID = await prisma.category.findUnique({
-        where: {
-          id: cate.categoryID,
-        },
-      });
+      let categoryID: string | null = null;
 
-      if (!categoryID?.id) {
-        return c.json?.(
-          {
-            status: 404,
-            message: "id category not found",
-          },
-          404
-        );
+      if (trans.type === TransactionType.EXPENSE) {
+        if (!cate.categoryID) {
+          return c.json?.(
+            {
+              status: 400,
+              message: "categoryID is required for EXPENSE",
+            },
+            400
+          );
+        }
+
+        const category = await prisma.category.findUnique({
+          where: { id: cate.categoryID },
+        });
+
+        if (!category) {
+          return c.json?.(
+            {
+              status: 404,
+              message: "category not found",
+            },
+            404
+          );
+        }
+
+        categoryID = category.id;
       }
 
       const transaction = await prisma.transaction.create({
@@ -68,8 +63,8 @@ class TransactionController {
           amount: trans.amount,
           description: trans.description,
           receiptUrl: trans.receiptUrl,
-          type: "INCOME",
-          categoryID: categoryID.id,
+          type: trans.type as TransactionType,
+          categoryID: categoryID!,
           userID: jwtUser.id,
         },
       });
@@ -77,7 +72,7 @@ class TransactionController {
       return c.json?.(
         {
           status: 201,
-          message: "succes create transaction",
+          message: "success create transaction",
           data: transaction,
         },
         201
@@ -87,7 +82,7 @@ class TransactionController {
       return c.json?.(
         {
           status: 500,
-          message: "Server Internal Error",
+          message: "server internal error",
           error: error instanceof Error ? error.message : error,
         },
         500
