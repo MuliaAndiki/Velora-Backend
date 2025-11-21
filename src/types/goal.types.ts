@@ -9,8 +9,6 @@ export interface Goal {
   startAt: Date;
   endAt: Date;
   UserID: string;
-  createdAt: Date;
-  updatedAt: Date;
 }
 export type JwtGoal = Pick<
   Goal,

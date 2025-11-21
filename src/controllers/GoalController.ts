@@ -63,7 +63,7 @@ class GoalController {
           startAt: startAt,
           savedAmount: go.savedAmount,
           targetAmount: go.targetAmount,
-          UserID: jwtUser.id,
+          userID: jwtUser.id,
           status: "INPROGRESS",
         },
       });
@@ -114,7 +114,7 @@ class GoalController {
 
       const goal = await prisma.goal.findMany({
         where: {
-          UserID: jwtUser.id,
+          userID: jwtUser.id,
         },
       });
 
@@ -179,7 +179,7 @@ class GoalController {
 
       const goal = await prisma.goal.deleteMany({
         where: {
-          UserID: jwtUser.id,
+          userID: jwtUser.id,
         },
       });
 
@@ -239,7 +239,7 @@ class GoalController {
       const goal = await prisma.goal.delete({
         where: {
           id: go.id,
-          UserID: jwtUser.id,
+          userID: jwtUser.id,
         },
       });
 
@@ -296,7 +296,7 @@ class GoalController {
       const goal = await prisma.goal.update({
         where: {
           id: params.id,
-          UserID: jwtUser.id,
+          userID: jwtUser.id,
         },
         data: {
           name: go.name,
@@ -361,7 +361,7 @@ class GoalController {
 
       const goal = await prisma.goal.findFirst({
         where: {
-          UserID: jwtUser.id,
+          userID: jwtUser.id,
           id: go.id,
         },
       });
@@ -425,7 +425,7 @@ class GoalController {
 
       const goal = await prisma.goal.findMany({
         where: {
-          UserID: jwtUser.id,
+          userID: jwtUser.id,
         },
       });
 

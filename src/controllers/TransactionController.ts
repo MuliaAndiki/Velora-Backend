@@ -28,44 +28,15 @@ class TransactionController {
         return c.json?.({ status: 400, message: "body is required" }, 400);
       }
 
-      let categoryID: string | null = null;
-
-      if (trans.type === TransactionType.EXPENSE) {
-        if (!cate.categoryID) {
-          return c.json?.(
-            {
-              status: 400,
-              message: "categoryID is required for EXPENSE",
-            },
-            400
-          );
-        }
-
-        const category = await prisma.category.findUnique({
-          where: { id: cate.categoryID },
-        });
-
-        if (!category) {
-          return c.json?.(
-            {
-              status: 404,
-              message: "category not found",
-            },
-            404
-          );
-        }
-
-        categoryID = category.id;
-      }
-
       const transaction = await prisma.transaction.create({
         data: {
           amount: trans.amount,
           description: trans.description,
           receiptUrl: trans.receiptUrl,
           type: trans.type as TransactionType,
-          categoryID: categoryID!,
+          categoryID: cate.categoryID,
           userID: jwtUser.id,
+          walletID: trans.walletID,
         },
       });
 

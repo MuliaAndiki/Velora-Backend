@@ -4,6 +4,7 @@ import autnRoutes from "./routes/authRoutes";
 import categoryRoutes from "./routes/categoryRoutes";
 import goalRoutes from "./routes/goalRoutes";
 import transactionRoutes from "./routes/transactionRoutes";
+import walletRoutes from "./routes/walletRoutes";
 
 class App {
   public app: Elysia;
@@ -24,6 +25,7 @@ class App {
         .use(categoryRoutes)
         .use(goalRoutes)
         .use(transactionRoutes)
+        .use(walletRoutes)
     );
   }
 }
