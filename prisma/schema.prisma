@@ -24,6 +24,7 @@ model User {
   categories  Category[]
   goal        Goal[]
   transaction Transaction[]
+  wallet      Wallet[]
 
   @@map("User")
 }
@@ -31,6 +32,7 @@ model User {
 model Category {
   id          String        @id @default(uuid())
   name        String
+  type        CategoryType
   userID      String
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -38,6 +40,7 @@ model Category {
   user        User          @relation(fields: [userID], references: [id], onDelete: Cascade)
   transaction Transaction[]
 
+  @@index([userID])
   @@map("Category")
 }
 
@@ -46,14 +49,15 @@ model Goal {
   name         String
   targetAmount Int
   savedAmount  Int
-  UserID       String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   endAt        DateTime
   startAt      DateTime
   status       GoalType @default(INPROGRESS)
-  user         User     @relation(fields: [UserID], references: [id], onDelete: Cascade)
+  userID       String
+  user         User     @relation(fields: [userID], references: [id], onDelete: Cascade)
 
+  @@index([userID])
   @@map("Goal")
 }
 
@@ -63,12 +67,31 @@ model Transaction {
   description String
   receiptUrl  String
   type        TransactionType
-  categoryID  String?
+  categoryID  String
   userID      String
   createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @default(now())
-  category    Category?       @relation(fields: [categoryID], references: [id], onDelete: Cascade)
+  updatedAt   DateTime        @updatedAt
+  walletID    String
+  category    Category        @relation(fields: [categoryID], references: [id], onDelete: Cascade)
   user        User            @relation(fields: [userID], references: [id], onDelete: Cascade)
+  wallet      Wallet          @relation(fields: [walletID], references: [id], onDelete: Cascade)
+
+  @@index([userID])
+  @@map("Transaction")
+}
+
+model Wallet {
+  id          String        @id @default(uuid())
+  balance     Int           @default(0)
+  userID      String
+  createAt    DateTime      @default(now())
+  updateAt    DateTime      @updatedAt
+  name        String
+  transaction Transaction[]
+  user        User          @relation(fields: [userID], references: [id], onDelete: Cascade)
+
+  @@index([userID])
+  @@map("Wallet")
 }
 
 enum TransactionType {
@@ -78,5 +101,10 @@ enum TransactionType {
 
 enum GoalType {
   INPROGRESS
-  COMPLATE
+  COMPLETE
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
 }

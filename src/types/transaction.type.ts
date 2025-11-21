@@ -8,13 +8,12 @@ export interface Transaction {
   type: TransactionType;
   categoryID: string;
   userID: string;
-  createAt: string;
-  updateAt: string;
+  walletID: string;
 }
 
 export type PickCreateTransaction = Pick<
   Transaction,
-  "amount" | "description" | "receiptUrl" | "type"
+  "amount" | "description" | "receiptUrl" | "type" | "walletID"
 >;
 
 export type PickIdCategory = Pick<Transaction, "categoryID">;

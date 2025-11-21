@@ -55,6 +55,7 @@ class CategoryController {
           name: cate.name,
           avaUrl: documentUrl.cate_avaUrl,
           user: { connect: { id: user.id } },
+          type: "INCOME",
         },
       });
 

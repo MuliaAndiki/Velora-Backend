@@ -15,9 +15,9 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "scripts", "types", "api"],
+  "include": ["src", "scripts", "types", "api", "prisma"],
   "exclude": ["node_modules", "dist", ".vercel"]
 }
