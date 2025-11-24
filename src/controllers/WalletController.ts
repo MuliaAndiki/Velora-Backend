@@ -65,7 +65,7 @@ class WalletController {
           404
         );
       }
-      const wallet = await prisma.wallet.findFirst({
+      const wallets = await prisma.wallet.findMany({
         where: {
           userID: jwtUser.id,
         },
@@ -74,8 +74,8 @@ class WalletController {
       return c.json?.(
         {
           status: 200,
-          message: "succes get wallet",
-          data: wallet,
+          message: "succes get wallets",
+          data: wallets,
         },
         200
       );

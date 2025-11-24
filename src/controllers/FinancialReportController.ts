@@ -33,7 +33,6 @@ class FinancialReportController {
         return c.json?.({ status: 404, message: "User not found" }, 404);
       }
 
-      // Calculate totals based on transactions
       const transactions = await prisma.transaction.findMany({
         where: {
           userID: jwtUser.id,
