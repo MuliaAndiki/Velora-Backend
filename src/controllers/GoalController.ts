@@ -65,6 +65,7 @@ class GoalController {
           targetAmount: go.targetAmount,
           userID: jwtUser.id,
           status: "INPROGRESS",
+          WalletID: go.WalletID,
         },
       });
 
@@ -280,7 +281,6 @@ class GoalController {
         );
       }
 
-      // If walletID provided, return the saved amount to wallet
       if (walletID && goal.savedAmount > 0) {
         const wallet = await prisma.wallet.findUnique({
           where: { id: walletID },

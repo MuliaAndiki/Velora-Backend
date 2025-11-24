@@ -50,6 +50,22 @@ class BudgetRouter {
         beforeHandle: [verifyToken().beforeHandle],
       }
     );
+
+    this.budgetRoutes.get(
+      "/progress/all",
+      (c: AppContext) => BudgetController.getBudgetProgress(c),
+      {
+        beforeHandle: [verifyToken().beforeHandle],
+      }
+    );
+
+    this.budgetRoutes.get(
+      "/progress/:id",
+      (c: AppContext) => BudgetController.getBudgetProgressById(c),
+      {
+        beforeHandle: [verifyToken().beforeHandle],
+      }
+    );
   }
 }
 

@@ -59,8 +59,8 @@ model Goal {
   status       GoalType @default(INPROGRESS)
   userID       String
   user         User     @relation(fields: [userID], references: [id], onDelete: Cascade)
-  WalletID String
-  wallet Wallet @relation(fields: [WalletID],references: [id])
+  WalletID     String?
+  wallet       Wallet?  @relation(fields: [WalletID], references: [id])
 
   @@index([userID])
   @@map("Goal")

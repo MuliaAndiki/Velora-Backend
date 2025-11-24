@@ -5,6 +5,7 @@ import {
   JwtTransaction,
   PickCreateTransaction,
   PickID,
+  PickIdCategory,
 } from "@/types/transaction.type";
 import prisma from "prisma/client";
 
@@ -13,7 +14,7 @@ class TransactionController {
     try {
       const jwtUser = c.user as JwtPayload;
       const trans = c.body as PickCreateTransaction;
-      const cate = c.params as JwtTransaction;
+      const cate = c.params as PickIdCategory;
 
       if (!jwtUser) {
         return c.json?.({ status: 404, message: "user not found" }, 404);
@@ -27,14 +28,12 @@ class TransactionController {
       ) {
         return c.json?.({ status: 400, message: "body is required" }, 400);
       }
-      if (!cate.type === !trans.type) {
-        return c.json?.(
-          {
-            status: 400,
-            message: "category type tidak sesuai",
-          },
-          400
-        );
+
+      const category = await prisma.category.findUnique({
+        where: { id: cate.categoryID },
+      });
+      if (!category) {
+        return c.json?.({ status: 404, message: "category not found" }, 404);
       }
 
       const wallet = await prisma.wallet.findUnique({
@@ -57,6 +56,34 @@ class TransactionController {
             400
           );
         }
+
+        // Check budget limit for EXPENSE transactions
+        const budget = await prisma.budget.findFirst({
+          where: {
+            categoryID: cate.categoryID,
+            userID: jwtUser.id,
+            status: "ACTIVE",
+          },
+        });
+
+        if (budget) {
+          const newSpent = budget.spent + trans.amount;
+          if (newSpent > budget.limit) {
+            return c.json?.(
+              {
+                status: 400,
+                message: `Budget limit exceeded. Limit: ${budget.limit}, Current spent: ${budget.spent}, Would be: ${newSpent}`,
+              },
+              400
+            );
+          }
+
+          // Update budget spent amount
+          await prisma.budget.update({
+            where: { id: budget.id },
+            data: { spent: newSpent },
+          });
+        }
       }
 
       const transaction = await prisma.transaction.create({
@@ -65,7 +92,7 @@ class TransactionController {
           description: trans.description,
           receiptUrl: trans.receiptUrl,
           type: trans.type as TransactionType,
-          categoryID: cate.id,
+          categoryID: cate.categoryID,
           userID: jwtUser.id,
           walletID: trans.walletID,
         },
@@ -315,6 +342,23 @@ class TransactionController {
         newBalance = wallet.balance - transaction.amount;
       } else if (transaction.type === "EXPENSE") {
         newBalance = wallet.balance + transaction.amount;
+
+        // Also reverse budget spent for EXPENSE transactions
+        const budget = await prisma.budget.findFirst({
+          where: {
+            categoryID: transaction.categoryID,
+            userID: jwtUser.id,
+            status: "ACTIVE",
+          },
+        });
+
+        if (budget && budget.spent > 0) {
+          const newSpent = Math.max(0, budget.spent - transaction.amount);
+          await prisma.budget.update({
+            where: { id: budget.id },
+            data: { spent: newSpent },
+          });
+        }
       }
 
       // Delete transaction

@@ -225,6 +225,124 @@ class BudgetController {
       );
     }
   }
+
+  public async getBudgetProgress(c: AppContext) {
+    try {
+      const jwtUser = c.user as JwtPayload;
+      if (!jwtUser) {
+        return c.json?.({ status: 404, message: "User Not Found" }, 404);
+      }
+
+      const budgets = await prisma.budget.findMany({
+        where: { userID: jwtUser.id },
+        include: { category: true },
+        orderBy: { createdAt: "desc" },
+      });
+
+      // Calculate progress for each budget
+      const budgetProgress = budgets.map((budget) => {
+        const percentage =
+          budget.limit > 0
+            ? Math.round((budget.spent / budget.limit) * 100)
+            : 0;
+        const remaining = budget.limit - budget.spent;
+        const isExceeded = budget.spent > budget.limit;
+
+        return {
+          ...budget,
+          percentage,
+          remaining,
+          isExceeded,
+          status:
+            percentage >= 100
+              ? "EXCEEDED"
+              : percentage >= 90
+              ? "WARNING"
+              : "NORMAL",
+        };
+      });
+
+      return c.json?.(
+        {
+          status: 200,
+          message: "Success get budget progress",
+          data: budgetProgress,
+        },
+        200
+      );
+    } catch (error) {
+      console.error(error);
+      return c.json?.(
+        {
+          status: 500,
+          message: "Server Internal Error",
+          error: error instanceof Error ? error.message : error,
+        },
+        500
+      );
+    }
+  }
+
+  public async getBudgetProgressById(c: AppContext) {
+    try {
+      const { id } = c.params as PickGetID;
+      const jwtUser = c.user as JwtPayload;
+
+      if (!jwtUser) {
+        return c.json?.({ status: 404, message: "User Not Found" }, 404);
+      }
+
+      if (!id) {
+        return c.json?.({ status: 400, message: "ID is required" }, 400);
+      }
+
+      const budget = await prisma.budget.findUnique({
+        where: { id, userID: jwtUser.id },
+        include: { category: true },
+      });
+
+      if (!budget) {
+        return c.json?.({ status: 404, message: "Budget not found" }, 404);
+      }
+
+      const percentage =
+        budget.limit > 0 ? Math.round((budget.spent / budget.limit) * 100) : 0;
+      const remaining = budget.limit - budget.spent;
+      const isExceeded = budget.spent > budget.limit;
+
+      const budgetProgress = {
+        ...budget,
+        percentage,
+        remaining,
+        isExceeded,
+        status:
+          percentage >= 100
+            ? "EXCEEDED"
+            : percentage >= 90
+            ? "WARNING"
+            : "NORMAL",
+      };
+
+      return c.json?.(
+        {
+          status: 200,
+          message: "Success get budget progress",
+          data: budgetProgress,
+        },
+        200
+      );
+    } catch (error) {
+      console.error(error);
+      return c.json?.(
+        {
+          status: 500,
+          message: "Server Internal Error",
+          error: error instanceof Error ? error.message : error,
+        },
+        500
+      );
+    }
+  }
 }
 
 export default new BudgetController();

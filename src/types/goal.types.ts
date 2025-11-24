@@ -18,8 +18,15 @@ export type JwtGoal = Pick<
 
 export type PickCreateGoal = Pick<
   Goal,
-  "name" | "endAt" | "savedAmount" | "targetAmount" | "startAt" | "status"
+  | "name"
+  | "endAt"
+  | "savedAmount"
+  | "targetAmount"
+  | "startAt"
+  | "status"
+  | "WalletID"
 >;
 export type PickGetID = Pick<Goal, "id">;
 
 export type PickInsertGoal = Pick<Goal, "savedAmount" | "WalletID" | "id">;
+export type PickWalletIDGoal = Pick<Goal, "WalletID">;
