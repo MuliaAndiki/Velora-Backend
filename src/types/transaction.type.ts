@@ -11,6 +11,8 @@ export interface Transaction {
   walletID: string;
 }
 
+export type JwtTransaction = Pick<Transaction, "id" | "type" | "walletID">;
+
 export type PickCreateTransaction = Pick<
   Transaction,
   "amount" | "description" | "receiptUrl" | "type" | "walletID"

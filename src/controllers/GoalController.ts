@@ -65,6 +65,7 @@ class GoalController {
           targetAmount: go.targetAmount,
           userID: jwtUser.id,
           status: "INPROGRESS",
+          WalletID: go.WalletID,
         },
       });
 
@@ -177,13 +178,21 @@ class GoalController {
         );
       }
 
+      // Get all goals first to calculate wallet returns
+      const goalsToDelete = await prisma.goal.findMany({
+        where: {
+          userID: jwtUser.id,
+        },
+      });
+
+      // Delete all goals
       const goal = await prisma.goal.deleteMany({
         where: {
           userID: jwtUser.id,
         },
       });
 
-      if (!goal) {
+      if (!goal || goal.count === 0) {
         return c.json?.(
           {
             status: 404,
@@ -192,6 +201,24 @@ class GoalController {
           404
         );
       }
+
+      // Return saved amounts to wallets if walletID provided in body
+      const walletAdjustments = (c.body as any)?.walletAdjustments;
+      if (walletAdjustments && Array.isArray(walletAdjustments)) {
+        for (const adj of walletAdjustments) {
+          const wallet = await prisma.wallet.findUnique({
+            where: { id: adj.walletID },
+          });
+
+          if (wallet) {
+            await prisma.wallet.update({
+              where: { id: adj.walletID },
+              data: { balance: wallet.balance + adj.amount },
+            });
+          }
+        }
+      }
+
       return c.json?.(
         {
           status: 200,
@@ -216,6 +243,7 @@ class GoalController {
     try {
       const go = c.params as PickGetID;
       const jwtUser = c.user as JwtPayload;
+      const walletID = (c.body as any)?.walletID;
 
       if (!go) {
         return c.json?.(
@@ -252,6 +280,20 @@ class GoalController {
           400
         );
       }
+
+      if (walletID && goal.savedAmount > 0) {
+        const wallet = await prisma.wallet.findUnique({
+          where: { id: walletID },
+        });
+
+        if (wallet) {
+          await prisma.wallet.update({
+            where: { id: walletID },
+            data: { balance: wallet.balance + goal.savedAmount },
+          });
+        }
+      }
+
       return c.json?.({
         status: 200,
         message: "Succesfuly Delete Goal",
@@ -472,33 +514,74 @@ class GoalController {
     }
   }
 
-  // not fix
   public async insertGoal(c: AppContext) {
     try {
       const jwtUser = c.user as JwtPayload;
       const go = c.body as PickInsertGoal;
 
       if (!jwtUser) {
-        return c.json?.(
-          {
-            status: 404,
-            message: "user not found",
-          },
-          404
-        );
+        return c.json?.({ status: 404, message: "user not found" }, 404);
       }
 
-      if (!go.savedAmount) {
+      if (!go.savedAmount || !go.id || !go.WalletID) {
+        return c.json?.({ status: 400, message: "body is required" }, 400);
+      }
+
+      const goal = await prisma.goal.findUnique({
+        where: { id: go.id },
+      });
+      if (!goal) {
+        return c.json?.({ status: 404, message: "goal not found" }, 404);
+      }
+
+      if (goal.userID !== jwtUser.id) {
+        return c.json?.({ status: 403, message: "unauthorized" }, 403);
+      }
+
+      const wallet = await prisma.wallet.findUnique({
+        where: { id: go.WalletID },
+      });
+      if (!wallet) {
+        return c.json?.({ status: 404, message: "wallet not found" }, 404);
+      }
+
+      if (wallet.balance < go.savedAmount) {
         return c.json?.(
-          {
-            status: 400,
-            message: "body is req",
-          },
+          { status: 400, message: "insufficient wallet balance" },
           400
         );
       }
 
-      // more logic
+      const newSavedAmount = goal.savedAmount + go.savedAmount;
+      if (newSavedAmount > goal.targetAmount) {
+        return c.json?.(
+          { status: 400, message: "saved amount exceeds target amount" },
+          400
+        );
+      }
+
+      const updatedGoal = await prisma.goal.update({
+        where: { id: go.id },
+        data: {
+          savedAmount: newSavedAmount,
+          status:
+            newSavedAmount >= goal.targetAmount ? "COMPLETE" : "INPROGRESS",
+        },
+      });
+
+      await prisma.wallet.update({
+        where: { id: go.WalletID },
+        data: { balance: wallet.balance - go.savedAmount },
+      });
+
+      return c.json?.(
+        {
+          status: 200,
+          message: "successfully inserted to goal",
+          data: updatedGoal,
+        },
+        200
+      );
     } catch (error) {
       console.error(error);
       return c.json?.({

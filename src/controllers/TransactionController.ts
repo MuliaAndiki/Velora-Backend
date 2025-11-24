@@ -2,6 +2,7 @@ import { AppContext } from "@/contex/app-context";
 import { TransactionType } from "@prisma/client";
 import { JwtPayload } from "@/types/auth.types";
 import {
+  JwtTransaction,
   PickCreateTransaction,
   PickID,
   PickIdCategory,
@@ -28,6 +29,63 @@ class TransactionController {
         return c.json?.({ status: 400, message: "body is required" }, 400);
       }
 
+      const category = await prisma.category.findUnique({
+        where: { id: cate.categoryID },
+      });
+      if (!category) {
+        return c.json?.({ status: 404, message: "category not found" }, 404);
+      }
+
+      const wallet = await prisma.wallet.findUnique({
+        where: { id: trans.walletID },
+      });
+
+      if (!wallet) {
+        return c.json?.({ status: 404, message: "wallet not found" }, 404);
+      }
+
+      let newBalance = wallet.balance;
+      if (trans.type === "INCOME") {
+        newBalance = wallet.balance + trans.amount;
+      } else if (trans.type === "EXPENSE") {
+        newBalance = wallet.balance - trans.amount;
+
+        if (newBalance < 0) {
+          return c.json?.(
+            { status: 400, message: "insufficient wallet balance" },
+            400
+          );
+        }
+
+        // Check budget limit for EXPENSE transactions
+        const budget = await prisma.budget.findFirst({
+          where: {
+            categoryID: cate.categoryID,
+            userID: jwtUser.id,
+            status: "ACTIVE",
+          },
+        });
+
+        if (budget) {
+          const newSpent = budget.spent + trans.amount;
+          if (newSpent > budget.limit) {
+            return c.json?.(
+              {
+                status: 400,
+                message: `Budget limit exceeded. Limit: ${budget.limit}, Current spent: ${budget.spent}, Would be: ${newSpent}`,
+              },
+              400
+            );
+          }
+
+          // Update budget spent amount
+          await prisma.budget.update({
+            where: { id: budget.id },
+            data: { spent: newSpent },
+          });
+        }
+      }
+
       const transaction = await prisma.transaction.create({
         data: {
           amount: trans.amount,
@@ -38,6 +96,11 @@ class TransactionController {
           userID: jwtUser.id,
           walletID: trans.walletID,
         },
+      });
+
+      await prisma.wallet.update({
+        where: { id: trans.walletID },
+        data: { balance: newBalance },
       });
 
       return c.json?.(
@@ -168,7 +231,47 @@ class TransactionController {
           404
         );
       }
-      const transaction = await prisma.transaction.deleteMany({
+
+      // Get all transactions for this user
+      const transactions = await prisma.transaction.findMany({
+        where: {
+          userID: jwtUser.id,
+        },
+      });
+
+      // Group transactions by wallet and calculate balance adjustments
+      const walletAdjustments = new Map<string, number>();
+      for (const transaction of transactions) {
+        const currentAdjustment =
+          walletAdjustments.get(transaction.walletID!) || 0;
+        if (transaction.type === "INCOME") {
+          walletAdjustments.set(
+            transaction.walletID!,
+            currentAdjustment - transaction.amount
+          );
+        } else if (transaction.type === "EXPENSE") {
+          walletAdjustments.set(
+            transaction.walletID!,
+            currentAdjustment + transaction.amount
+          );
+        }
+      }
+
+      // Update all affected wallets
+      for (const [walletId, adjustment] of walletAdjustments.entries()) {
+        const wallet = await prisma.wallet.findUnique({
+          where: { id: walletId },
+        });
+        if (wallet) {
+          await prisma.wallet.update({
+            where: { id: walletId },
+            data: { balance: wallet.balance + adjustment },
+          });
+        }
+      }
+
+      // Delete all transactions
+      const deletedTransactions = await prisma.transaction.deleteMany({
         where: {
           userID: jwtUser.id,
         },
@@ -177,7 +280,7 @@ class TransactionController {
       return c.json?.({
         status: 201,
         message: "succesfully delete all transaction",
-        data: transaction,
+        data: deletedTransactions,
       });
     } catch (error) {
       console.error(error);
@@ -215,11 +318,61 @@ class TransactionController {
         );
       }
 
-      const transaction = await prisma.transaction.delete({
+      // Get transaction first to get wallet and amount info
+      const transaction = await prisma.transaction.findUnique({
+        where: { id: trans.id },
+      });
+
+      if (!transaction) {
+        return c.json?.({ status: 404, message: "transaction not found" }, 404);
+      }
+
+      // Get wallet to update balance
+      const wallet = await prisma.wallet.findUnique({
+        where: { id: transaction.walletID! },
+      });
+
+      if (!wallet) {
+        return c.json?.({ status: 404, message: "wallet not found" }, 404);
+      }
+
+      // Calculate new balance by reversing the transaction
+      let newBalance = wallet.balance;
+      if (transaction.type === "INCOME") {
+        newBalance = wallet.balance - transaction.amount;
+      } else if (transaction.type === "EXPENSE") {
+        newBalance = wallet.balance + transaction.amount;
+
+        // Also reverse budget spent for EXPENSE transactions
+        const budget = await prisma.budget.findFirst({
+          where: {
+            categoryID: transaction.categoryID,
+            userID: jwtUser.id,
+            status: "ACTIVE",
+          },
+        });
+
+        if (budget && budget.spent > 0) {
+          const newSpent = Math.max(0, budget.spent - transaction.amount);
+          await prisma.budget.update({
+            where: { id: budget.id },
+            data: { spent: newSpent },
+          });
+        }
+      }
+
+      // Delete transaction
+      await prisma.transaction.delete({
         where: {
           id: trans.id,
           userID: jwtUser.id,
         },
+      });
+
+      // Update wallet balance with reversed amount
+      await prisma.wallet.update({
+        where: { id: transaction.walletID! },
+        data: { balance: newBalance },
       });
 
       return c.json?.(
