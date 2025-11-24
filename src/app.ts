@@ -5,6 +5,8 @@ import categoryRoutes from "./routes/categoryRoutes";
 import goalRoutes from "./routes/goalRoutes";
 import transactionRoutes from "./routes/transactionRoutes";
 import walletRoutes from "./routes/walletRoutes";
+import budgetRoutes from "./routes/budgetRoutes";
+import reportRoutes from "./routes/reportRoutes";
 
 class App {
   public app: Elysia;
@@ -26,6 +28,8 @@ class App {
         .use(goalRoutes)
         .use(transactionRoutes)
         .use(walletRoutes)
+        .use(budgetRoutes)
+        .use(reportRoutes)
     );
   }
 }

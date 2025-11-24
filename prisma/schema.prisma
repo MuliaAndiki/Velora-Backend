@@ -25,6 +25,8 @@ model User {
   goal        Goal[]
   transaction Transaction[]
   wallet      Wallet[]
+  budget      Budget[]
+  report      FinancialReport[]
 
   @@map("User")
 }
@@ -39,6 +41,7 @@ model Category {
   avaUrl      String
   user        User          @relation(fields: [userID], references: [id], onDelete: Cascade)
   transaction Transaction[]
+  budget      Budget[]
 
   @@index([userID])
   @@map("Category")
@@ -56,6 +59,8 @@ model Goal {
   status       GoalType @default(INPROGRESS)
   userID       String
   user         User     @relation(fields: [userID], references: [id], onDelete: Cascade)
+  WalletID String
+  wallet Wallet @relation(fields: [WalletID],references: [id])
 
   @@index([userID])
   @@map("Goal")
@@ -88,15 +93,76 @@ model Wallet {
   updateAt    DateTime      @updatedAt
   name        String
   transaction Transaction[]
+  goal Goal[]
   user        User          @relation(fields: [userID], references: [id], onDelete: Cascade)
 
   @@index([userID])
   @@map("Wallet")
 }
 
+model Budget {
+  id            String        @id @default(uuid())
+  name          String
+  categoryID    String
+  limit         Int
+  spent         Int           @default(0)
+  period        BudgetPeriod  @default(MONTHLY)
+  startDate     DateTime
+  endDate       DateTime?
+  status        BudgetStatus  @default(ACTIVE)
+  userID        String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  category      Category      @relation(fields: [categoryID], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userID], references: [id], onDelete: Cascade)
+
+  @@index([userID])
+  @@index([categoryID])
+  @@map("Budget")
+}
+
+model FinancialReport {
+  id            String        @id @default(uuid())
+  title         String
+  type          ReportType
+  startDate     DateTime
+  endDate       DateTime
+  totalIncome   Int           @default(0)
+  totalExpense  Int           @default(0)
+  netAmount     Int           @default(0)
+  fileUrl       String?
+  format        String        @default("pdf")
+  userID        String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  user          User          @relation(fields: [userID], references: [id], onDelete: Cascade)
+
+  @@index([userID])
+  @@map("FinancialReport")
+}
+
 enum TransactionType {
   INCOME
   EXPENSE
+}
+
+enum BudgetPeriod {
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum BudgetStatus {
+  ACTIVE
+  COMPLETED
+  EXCEEDED
+}
+
+enum ReportType {
+  TRANSACTIONS
+  BUDGETS
+  GOALS
+  SUMMARY
 }
 
 enum GoalType {

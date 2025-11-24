@@ -56,6 +56,9 @@ class GoalRouter {
         beforeHandle: [verifyToken().beforeHandle],
       }
     );
+    this.goalRouter.put("/", (c: AppContext) => GoalController.insertGoal(c), {
+      beforeHandle: [verifyToken().beforeHandle],
+    });
   }
 }
 

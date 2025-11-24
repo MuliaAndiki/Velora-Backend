@@ -9,6 +9,7 @@ export interface Goal {
   startAt: Date;
   endAt: Date;
   UserID: string;
+  WalletID: string;
 }
 export type JwtGoal = Pick<
   Goal,
@@ -21,4 +22,4 @@ export type PickCreateGoal = Pick<
 >;
 export type PickGetID = Pick<Goal, "id">;
 
-export type PickInsertGoal = Pick<Goal, "savedAmount">;
+export type PickInsertGoal = Pick<Goal, "savedAmount" | "WalletID" | "id">;
