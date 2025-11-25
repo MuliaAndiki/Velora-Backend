@@ -56,6 +56,50 @@ class GoalController {
         );
       }
 
+      if (!go.walletID) {
+        return c.json?.(
+          {
+            status: 400,
+            message: "Wallet ID is required",
+          },
+          400
+        );
+      }
+
+      const wallet = await prisma.wallet.findUnique({
+        where: { id: go.walletID },
+      });
+
+      if (!wallet) {
+        return c.json?.(
+          {
+            status: 404,
+            message: "Wallet not found",
+          },
+          404
+        );
+      }
+
+      if (wallet.userID !== jwtUser.id) {
+        return c.json?.(
+          {
+            status: 403,
+            message: "Unauthorized: wallet does not belong to user",
+          },
+          403
+        );
+      }
+
+      if (wallet.balance < go.savedAmount) {
+        return c.json?.(
+          {
+            status: 400,
+            message: "Insufficient wallet balance",
+          },
+          400
+        );
+      }
+
       const goal = await prisma.goal.create({
         data: {
           name: go.name,
@@ -65,7 +109,7 @@ class GoalController {
           targetAmount: go.targetAmount,
           userID: jwtUser.id,
           status: "INPROGRESS",
-          WalletID: go.WalletID,
+          walletID: go.walletID,
         },
       });
 
@@ -78,6 +122,11 @@ class GoalController {
           400
         );
       }
+
+      await prisma.wallet.update({
+        where: { id: go.walletID },
+        data: { balance: wallet.balance - go.savedAmount },
+      });
 
       return c.json?.(
         {
@@ -178,14 +227,6 @@ class GoalController {
         );
       }
 
-      // Get all goals first to calculate wallet returns
-      const goalsToDelete = await prisma.goal.findMany({
-        where: {
-          userID: jwtUser.id,
-        },
-      });
-
-      // Delete all goals
       const goal = await prisma.goal.deleteMany({
         where: {
           userID: jwtUser.id,
@@ -202,7 +243,6 @@ class GoalController {
         );
       }
 
-      // Return saved amounts to wallets if walletID provided in body
       const walletAdjustments = (c.body as any)?.walletAdjustments;
       if (walletAdjustments && Array.isArray(walletAdjustments)) {
         for (const adj of walletAdjustments) {
@@ -294,11 +334,14 @@ class GoalController {
         }
       }
 
-      return c.json?.({
-        status: 200,
-        message: "Succesfuly Delete Goal",
-        data: goal,
-      });
+      return c.json?.(
+        {
+          status: 200,
+          message: "Succesfuly Delete Goal",
+          data: goal,
+        },
+        200
+      );
     } catch (error) {
       console.error(error);
       return c.json?.(
@@ -523,7 +566,7 @@ class GoalController {
         return c.json?.({ status: 404, message: "user not found" }, 404);
       }
 
-      if (!go.savedAmount || !go.id || !go.WalletID) {
+      if (!go.savedAmount || !go.id || !go.walletID) {
         return c.json?.({ status: 400, message: "body is required" }, 400);
       }
 
@@ -539,7 +582,7 @@ class GoalController {
       }
 
       const wallet = await prisma.wallet.findUnique({
-        where: { id: go.WalletID },
+        where: { id: go.walletID },
       });
       if (!wallet) {
         return c.json?.({ status: 404, message: "wallet not found" }, 404);
@@ -570,7 +613,7 @@ class GoalController {
       });
 
       await prisma.wallet.update({
-        where: { id: go.WalletID },
+        where: { id: go.walletID },
         data: { balance: wallet.balance - go.savedAmount },
       });
 

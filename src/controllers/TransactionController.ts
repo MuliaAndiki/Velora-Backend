@@ -2,7 +2,6 @@ import { AppContext } from "@/contex/app-context";
 import { TransactionType } from "@prisma/client";
 import { JwtPayload } from "@/types/auth.types";
 import {
-  JwtTransaction,
   PickCreateTransaction,
   PickID,
   PickIdCategory,
@@ -57,7 +56,6 @@ class TransactionController {
           );
         }
 
-        // Check budget limit for EXPENSE transactions
         const budget = await prisma.budget.findFirst({
           where: {
             categoryID: cate.categoryID,
@@ -78,7 +76,6 @@ class TransactionController {
             );
           }
 
-          // Update budget spent amount
           await prisma.budget.update({
             where: { id: budget.id },
             data: { spent: newSpent },
@@ -399,7 +396,7 @@ class TransactionController {
     try {
       const jwtUser = c.user as JwtPayload;
       const trans = c.params as PickID;
-      // const transBody = c.body as PickCreateTransaction;
+      const transBody = c.body as PickCreateTransaction;
       if (!jwtUser) {
         return c.json?.(
           {
@@ -425,7 +422,7 @@ class TransactionController {
           userID: jwtUser.id,
         },
 
-        data: {},
+        data: { ...transBody },
       });
       return c.json?.(
         {
