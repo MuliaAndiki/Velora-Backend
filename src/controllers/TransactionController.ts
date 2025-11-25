@@ -76,7 +76,6 @@ class TransactionController {
             );
           }
 
-          // Update budget spent amount
           await prisma.budget.update({
             where: { id: budget.id },
             data: { spent: newSpent },

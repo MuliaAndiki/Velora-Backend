@@ -65,7 +65,7 @@ class WalletController {
           404
         );
       }
-      const wallets = await prisma.wallet.findMany({
+      const wallets = await prisma.wallet.findFirst({
         where: {
           userID: jwtUser.id,
         },

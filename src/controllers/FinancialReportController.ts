@@ -202,7 +202,6 @@ class FinancialReportController {
         return c.json?.({ status: 404, message: "User Not Found" }, 404);
       }
 
-      // Get current month transactions
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
