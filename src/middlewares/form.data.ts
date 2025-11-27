@@ -8,15 +8,12 @@ export const formDataMiddleware = () => ({
 
     try {
       if (contentType.includes("application/json")) {
-        console.log("🔹 JSON request detected, skipping FormData parsing");
-
         const rawBody = await c.request.text();
         const jsonBody = JSON.parse(rawBody);
 
         (c as any).body = jsonBody;
         c.files = {};
 
-        console.log("✅ JSON Body fields:", Object.keys(jsonBody));
         return;
       }
 
