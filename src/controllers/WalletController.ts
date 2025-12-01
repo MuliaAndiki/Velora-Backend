@@ -26,6 +26,24 @@ class WalletController {
           400
         );
       }
+
+      const exitis = await prisma.wallet.findFirst({
+        where: {
+          userID: jwtUser.id,
+        },
+      });
+
+      if (exitis) {
+        return c.json?.(
+          {
+            status: 400,
+            message: "user already exitis",
+            data: exitis,
+          },
+          400
+        );
+      }
+
       const wallet = await prisma.wallet.create({
         data: {
           name: wall.name,
